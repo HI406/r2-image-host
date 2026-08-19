@@ -1,649 +1,836 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>R2 图床控制台</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      :root {
-        --color-bg: #fef6e4;
-        --color-headline: #001858;
-        --color-paragraph: #172c66;
-        --color-button: #f582ae;
-        --color-button-text: #001858;
-        --color-stroke: #001858;
-        --color-main: #f3d2c1;
-        --color-highlight: #fef6e4;
-        --color-secondary: #8bd3dd;
-        --color-tertiary: #f582ae;
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R2 图床控制台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <style>
+    :root {
+      --color-bg: #fef6e4;
+      --color-headline: #001858;
+      --color-paragraph: #172c66;
+      --color-button: #f582ae;
+      --color-button-text: #001858;
+      --color-stroke: #001858;
+      --color-main: #f3d2c1;
+      --color-highlight: #fef6e4;
+      --color-secondary: #8bd3dd;
+      --color-tertiary: #f582ae;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: linear-gradient(135deg, #fef6e4 0%, #f3d2c1 100%);
+      color: var(--color-paragraph);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, rgba(254, 246, 228, 0.95) 0%, rgba(243, 210, 193, 0.95) 100%);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border: 2px solid rgba(0, 24, 88, 0.1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -10px rgba(0, 24, 88, 0.15);
+      border-color: rgba(139, 211, 221, 0.5);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f582ae 0%, #f89dc4 100%);
+      color: var(--color-button-text);
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(245, 130, 174, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(245, 130, 174, 0.4);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #8bd3dd 0%, #a5dde5 100%);
+      color: var(--color-button-text);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(139, 211, 221, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ff6b9d 0%, #ff8fb5 100%);
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(255, 107, 157, 0.4);
+    }
+
+    .dropzone {
+      border: 3px dashed rgba(139, 211, 221, 0.5);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 210, 193, 0.3) 100%);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dropzone::before {
+      content: '📤';
+      position: absolute;
+      font-size: 64px;
+      opacity: 0.1;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .dropzone:hover {
+      border-color: rgba(245, 130, 174, 0.6);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(243, 210, 193, 0.5) 100%);
+      transform: scale(1.01);
+    }
+
+    .dropzone-active {
+      border-color: var(--color-button);
+      background: linear-gradient(135deg, rgba(245, 130, 174, 0.2) 0%, rgba(139, 211, 221, 0.2) 100%);
+      transform: scale(1.02);
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(243, 210, 193, 0.6) 100%);
+      border: 2px solid rgba(139, 211, 221, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(245, 130, 174, 0.5);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 24, 88, 0.1);
+    }
+
+    .file-card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(139, 211, 221, 0.2);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .file-card:hover {
+      border-color: rgba(245, 130, 174, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 32px rgba(0, 24, 88, 0.15);
+    }
+
+    .file-thumbnail {
+      background: linear-gradient(135deg, #f3d2c1 0%, #fef6e4 100%);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .file-thumbnail img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .file-card:hover .file-thumbnail {
+      opacity: 0.9;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, #f582ae 0%, #8bd3dd 100%);
+      height: 8px;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+      box-shadow: 0 2px 8px rgba(245, 130, 174, 0.3);
+    }
+
+    .badge {
+      background: linear-gradient(135deg, #8bd3dd 0%, #a5dde5 100%);
+      color: var(--color-headline);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(139, 211, 221, 0.3);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="search"] {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(139, 211, 221, 0.3);
+      color: var(--color-paragraph);
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="search"]:focus {
+      outline: none;
+      border-color: var(--color-button);
+      box-shadow: 0 0 0 3px rgba(245, 130, 174, 0.1);
+    }
+
+    .nav-btn {
+      position: relative;
+      transition: all 0.3s ease;
+      color: var(--color-paragraph);
+    }
+
+    .nav-btn:hover {
+      color: var(--color-button);
+    }
+
+    .nav-btn.active {
+      color: var(--color-button);
+      font-weight: 600;
+    }
+
+    .nav-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f582ae 0%, #8bd3dd 100%);
+      border-radius: 999px;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
       }
 
-      html,
-      body {
-        height: 100%;
-        background: linear-gradient(135deg, #fef6e4 0%, #f3d2c1 100%);
-        color: var(--color-paragraph);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .toast {
+      background: linear-gradient(135deg, rgba(0, 24, 88, 0.95) 0%, rgba(23, 44, 102, 0.95) 100%);
+      color: white;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 24, 88, 0.3);
+    }
+
+    .columns-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 6px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 2px solid rgba(139, 211, 221, 0.3);
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(0, 24, 88, 0.15);
+      padding: 8px;
+      z-index: 100;
+      min-width: 120px;
+    }
+
+    .columns-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-paragraph);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .columns-dropdown-item:hover {
+      background: rgba(139, 211, 221, 0.2);
+    }
+
+    .columns-dropdown-item.active {
+      background: linear-gradient(135deg, rgba(245, 130, 174, 0.15) 0%, rgba(139, 211, 221, 0.15) 100%);
+      color: var(--color-headline);
+      font-weight: 600;
+    }
+
+    .columns-dropdown-item .icon-grid {
+      display: grid;
+      gap: 2px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .columns-dropdown-item .icon-grid span {
+      background: currentColor;
+      border-radius: 2px;
+      opacity: 0.6;
+    }
+
+    .columns-dropdown-item.active .icon-grid span {
+      opacity: 1;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 2px solid rgba(139, 211, 221, 0.3);
+    }
+
+    .icon-upload {
+      font-size: 48px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
       }
 
-      .gradient-bg {
-        background: linear-gradient(135deg, rgba(254, 246, 228, 0.95) 0%, rgba(243, 210, 193, 0.95) 100%);
+      50% {
+        transform: translateY(-10px);
       }
+    }
 
-      .card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(20px);
-        border: 2px solid rgba(0, 24, 88, 0.1);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
+    .max-w-6xl {
+      max-width: 1800px !important;
+    }
+  </style>
+</head>
 
-      .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px -10px rgba(0, 24, 88, 0.15);
-        border-color: rgba(139, 211, 221, 0.5);
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, #f582ae 0%, #f89dc4 100%);
-        color: var(--color-button-text);
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(245, 130, 174, 0.3);
-      }
-
-      .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(245, 130, 174, 0.4);
-      }
-
-      .btn-secondary {
-        background: linear-gradient(135deg, #8bd3dd 0%, #a5dde5 100%);
-        color: var(--color-button-text);
-        font-weight: 600;
-        transition: all 0.3s ease;
-      }
-
-      .btn-secondary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(139, 211, 221, 0.4);
-      }
-
-      .btn-danger {
-        background: linear-gradient(135deg, #ff6b9d 0%, #ff8fb5 100%);
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-      }
-
-      .btn-danger:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(255, 107, 157, 0.4);
-      }
-
-      .dropzone {
-        border: 3px dashed rgba(139, 211, 221, 0.5);
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(243, 210, 193, 0.3) 100%);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .dropzone::before {
-        content: '📤';
-        position: absolute;
-        font-size: 64px;
-        opacity: 0.1;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        pointer-events: none;
-      }
-
-      .dropzone:hover {
-        border-color: rgba(245, 130, 174, 0.6);
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(243, 210, 193, 0.5) 100%);
-        transform: scale(1.01);
-      }
-
-      .dropzone-active {
-        border-color: var(--color-button);
-        background: linear-gradient(135deg, rgba(245, 130, 174, 0.2) 0%, rgba(139, 211, 221, 0.2) 100%);
-        transform: scale(1.02);
-      }
-
-      .stat-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(243, 210, 193, 0.6) 100%);
-        border: 2px solid rgba(139, 211, 221, 0.3);
-        transition: all 0.3s ease;
-      }
-
-      .stat-card:hover {
-        border-color: rgba(245, 130, 174, 0.5);
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 24, 88, 0.1);
-      }
-
-      .file-card {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid rgba(139, 211, 221, 0.2);
-        transition: all 0.3s ease;
-        overflow: hidden;
-      }
-
-      .file-card:hover {
-        border-color: rgba(245, 130, 174, 0.4);
-        transform: translateY(-4px);
-        box-shadow: 0 16px 32px rgba(0, 24, 88, 0.15);
-      }
-
-      .file-thumbnail {
-        background: linear-gradient(135deg, #f3d2c1 0%, #fef6e4 100%);
-        transition: transform 0.3s ease;
-      }
-
-      .file-card:hover .file-thumbnail {
-        transform: scale(1.05);
-      }
-
-      .progress-bar {
-        background: linear-gradient(90deg, #f582ae 0%, #8bd3dd 100%);
-        height: 8px;
-        border-radius: 999px;
-        transition: width 0.3s ease;
-        box-shadow: 0 2px 8px rgba(245, 130, 174, 0.3);
-      }
-
-      .badge {
-        background: linear-gradient(135deg, #8bd3dd 0%, #a5dde5 100%);
-        color: var(--color-headline);
-        padding: 4px 12px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        box-shadow: 0 2px 6px rgba(139, 211, 221, 0.3);
-      }
-
-      input[type="text"],
-      input[type="password"],
-      input[type="search"] {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid rgba(139, 211, 221, 0.3);
-        color: var(--color-paragraph);
-        transition: all 0.3s ease;
-      }
-
-      input[type="text"]:focus,
-      input[type="password"]:focus,
-      input[type="search"]:focus {
-        outline: none;
-        border-color: var(--color-button);
-        box-shadow: 0 0 0 3px rgba(245, 130, 174, 0.1);
-      }
-
-      .nav-btn {
-        position: relative;
-        transition: all 0.3s ease;
-        color: var(--color-paragraph);
-      }
-
-      .nav-btn:hover {
-        color: var(--color-button);
-      }
-
-      .nav-btn.active {
-        color: var(--color-button);
-        font-weight: 600;
-      }
-
-      .nav-btn.active::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #f582ae 0%, #8bd3dd 100%);
-        border-radius: 999px;
-      }
-
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .animate-in {
-        animation: slideIn 0.4s ease-out;
-      }
-
-      .toast {
-        background: linear-gradient(135deg, rgba(0, 24, 88, 0.95) 0%, rgba(23, 44, 102, 0.95) 100%);
-        color: white;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0, 24, 88, 0.3);
-      }
-
-      .header {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(20px);
-        border-bottom: 2px solid rgba(139, 211, 221, 0.3);
-      }
-
-      .icon-upload {
-        font-size: 48px;
-        animation: float 3s ease-in-out infinite;
-      }
-
-      @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-      }
-    </style>
-  </head>
-  <body class="min-h-full">
-    <div class="min-h-full flex flex-col">
-      <header class="header">
-        <div class="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl font-bold" style="color: var(--color-headline);">📸 R2 Image Host</span>
-            <span class="text-sm hidden md:block" style="color: var(--color-paragraph);">极简图床控制台</span>
-          </div>
-          <nav class="flex items-center gap-1" id="main-nav" hidden>
-            <button data-section="upload" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">上传</button>
-            <button data-section="files" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">文件管理</button>
-            <button data-section="history" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">历史直链</button>
-            <button data-section="settings" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">设置</button>
-          </nav>
-          <button id="logout-btn" class="hidden text-sm font-medium hover:opacity-70 transition-opacity" style="color: var(--color-button);">退出登录</button>
+<body class="min-h-full">
+  <div class="min-h-full flex flex-col">
+    <header class="header">
+      <div class="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="favicon.svg" alt="icon" class="w-7 h-7" style="object-fit: contain;" />
+          <span class="text-2xl font-bold" style="color: var(--color-headline);">R2 Image Host</span>
+          <span class="text-sm hidden md:block" style="color: var(--color-paragraph);">极简图床控制台</span>
         </div>
-      </header>
+        <nav class="flex items-center gap-1" id="main-nav" hidden>
+          <button data-section="upload" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">上传</button>
+          <button data-section="files" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">文件管理</button>
+          <button data-section="history" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">历史直链</button>
+          <button data-section="settings" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium">设置</button>
+        </nav>
+        <button id="logout-btn" class="hidden text-sm font-medium hover:opacity-70 transition-opacity"
+          style="color: var(--color-button);">退出登录</button>
+      </div>
+    </header>
 
-      <main class="flex-1">
-        <section id="login-section" class="max-w-md mx-auto mt-24 card rounded-3xl p-10 shadow-2xl animate-in">
-          <div class="text-center mb-8">
-            <div class="text-5xl mb-4">🔐</div>
-            <h2 class="text-2xl font-bold mb-2" style="color: var(--color-headline);">欢迎回来</h2>
-            <p class="text-sm" style="color: var(--color-paragraph);">请输入访问密码以继续</p>
-          </div>
-          <label class="block text-sm font-semibold mb-2" style="color: var(--color-paragraph);" for="password">访问密码</label>
-          <input id="password" type="password" class="w-full px-4 py-3 rounded-xl" placeholder="请输入密码" />
-          <button id="login-btn" class="mt-6 w-full py-3 rounded-xl btn-primary">登录</button>
-          <p id="login-error" class="mt-4 text-sm font-medium hidden" style="color: #ff6b9d;">密码错误，请重试。</p>
-        </section>
+    <main class="flex-1">
+      <section id="login-section" class="max-w-md mx-auto mt-24 card rounded-3xl p-10 shadow-2xl animate-in">
+        <div class="text-center mb-8">
+          <div class="text-5xl mb-4">🔐</div>
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--color-headline);">欢迎回来</h2>
+          <p class="text-sm" style="color: var(--color-paragraph);">请输入访问密码以继续</p>
+        </div>
+        <label class="block text-sm font-semibold mb-2" style="color: var(--color-paragraph);"
+          for="password">访问密码</label>
+        <input id="password" type="password" class="w-full px-4 py-3 rounded-xl" placeholder="请输入密码" />
+        <button id="login-btn" class="mt-6 w-full py-3 rounded-xl btn-primary">登录</button>
+        <p id="login-error" class="mt-4 text-sm font-medium hidden" style="color: #ff6b9d;">密码错误，请重试。</p>
+      </section>
 
-        <section id="app-section" class="hidden">
-          <div class="max-w-6xl mx-auto px-4 py-10 space-y-8">
-            <div id="upload-view" class="app-view space-y-6">
-              <div class="card rounded-3xl p-8 animate-in">
-                <div class="flex items-center gap-3 mb-6">
-                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style="background: linear-gradient(135deg, #f582ae 0%, #8bd3dd 100%);">📤</div>
-                  <h3 class="text-xl font-bold" style="color: var(--color-headline);">上传图片</h3>
+      <section id="app-section" class="hidden">
+        <div class="max-w-6xl mx-auto px-4 py-10 space-y-8">
+          <div id="upload-view" class="app-view space-y-6">
+            <div class="card rounded-3xl p-8 animate-in">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl"
+                  style="background: linear-gradient(135deg, #f582ae 0%, #8bd3dd 100%);">📤</div>
+                <h3 class="text-xl font-bold" style="color: var(--color-headline);">上传图片</h3>
+              </div>
+              <div id="drop-zone" class="dropzone rounded-2xl p-16 text-center">
+                <div class="icon-upload">📁</div>
+                <p class="text-lg font-semibold mt-4 mb-2" style="color: var(--color-headline);">拖拽图片到这里</p>
+                <p class="text-sm mb-6" style="color: var(--color-paragraph);">或点击选择文件 / 按 Ctrl+V 粘贴</p>
+                <label class="inline-flex items-center gap-2 px-6 py-3 btn-primary rounded-xl cursor-pointer">
+                  <span>选择文件</span>
+                  <input id="file-input" type="file" accept="image/*" multiple class="hidden" />
+                </label>
+                <p class="mt-4 text-xs" style="color: var(--color-paragraph); opacity: 0.7;">支持 JPEG/PNG/GIF/WebP/SVG ·
+                  单文件 ≤ 50MB</p>
+              </div>
+
+              <div id="upload-preview" class="hidden mt-8 card rounded-2xl p-6 animate-in">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-lg font-bold" style="color: var(--color-headline);">📋 待上传文件 (<span
+                      id="preview-count">0</span>)</h4>
+                  <button id="preview-close" class="text-2xl hover:opacity-70 transition-opacity"
+                    style="color: var(--color-paragraph);">×</button>
                 </div>
-                <div id="drop-zone" class="dropzone rounded-2xl p-16 text-center">
-                  <div class="icon-upload">📁</div>
-                  <p class="text-lg font-semibold mt-4 mb-2" style="color: var(--color-headline);">拖拽图片到这里</p>
-                  <p class="text-sm mb-6" style="color: var(--color-paragraph);">或点击选择文件 / 按 Ctrl+V 粘贴</p>
-                  <label class="inline-flex items-center gap-2 px-6 py-3 btn-primary rounded-xl cursor-pointer">
-                    <span>选择文件</span>
-                    <input id="file-input" type="file" accept="image/*" multiple class="hidden" />
-                  </label>
-                  <p class="mt-4 text-xs" style="color: var(--color-paragraph); opacity: 0.7;">支持 JPEG/PNG/GIF/WebP/SVG · 单文件 ≤ 50MB</p>
-                </div>
-
-                <div id="upload-preview" class="hidden mt-8 card rounded-2xl p-6 animate-in">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-lg font-bold" style="color: var(--color-headline);">📋 待上传文件 (<span id="preview-count">0</span>)</h4>
-                    <button id="preview-close" class="text-2xl hover:opacity-70 transition-opacity" style="color: var(--color-paragraph);">×</button>
-                  </div>
-                  <div id="preview-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 max-h-96 overflow-y-auto"></div>
-                  <div class="flex gap-3 justify-end">
-                    <button id="preview-cancel" class="px-6 py-3 btn-secondary rounded-xl font-semibold">取消</button>
-                    <button id="preview-confirm" class="px-6 py-3 btn-primary rounded-xl font-semibold">🚀 开始上传</button>
-                  </div>
-                </div>
-
-                <div id="upload-progress" class="hidden mt-8">
-                  <div class="flex items-center justify-between text-sm font-semibold mb-3" style="color: var(--color-paragraph);">
-                    <span>上传中...</span>
-                    <span id="progress-text">0%</span>
-                  </div>
-                  <div class="w-full h-3 rounded-full" style="background: rgba(139, 211, 221, 0.2);">
-                    <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
-                  </div>
-                </div>
-
-                <div id="upload-result" class="hidden mt-8 card rounded-2xl p-6 space-y-4 animate-in">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="text-2xl">✅</span>
-                      <div>
-                        <p class="text-sm font-semibold" style="color: var(--color-button);">上传成功</p>
-                        <p id="result-key" class="text-sm font-medium" style="color: var(--color-paragraph);"></p>
-                      </div>
-                    </div>
-                    <button id="result-close" class="text-2xl hover:opacity-70 transition-opacity" style="color: var(--color-paragraph);">×</button>
-                  </div>
-                  <img id="result-preview" src="" alt="预览" class="w-full max-h-80 object-cover rounded-xl" style="border: 2px solid rgba(139, 211, 221, 0.3);" />
-                  <div class="grid gap-3">
-                    <div class="flex gap-2">
-                      <input id="link-direct" readonly class="flex-1 px-4 py-3 rounded-xl text-sm" style="background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(139, 211, 221, 0.2);" />
-                      <button data-target="link-direct" class="copy-btn px-5 py-3 btn-secondary rounded-xl text-sm whitespace-nowrap">复制直链</button>
-                    </div>
-                    <div class="flex gap-2">
-                      <input id="link-markdown" readonly class="flex-1 px-4 py-3 rounded-xl text-sm" style="background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(139, 211, 221, 0.2);" />
-                      <button data-target="link-markdown" class="copy-btn px-5 py-3 btn-secondary rounded-xl text-sm whitespace-nowrap">Markdown</button>
-                    </div>
-                    <div class="flex gap-2">
-                      <input id="link-html" readonly class="flex-1 px-4 py-3 rounded-xl text-sm" style="background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(139, 211, 221, 0.2);" />
-                      <button data-target="link-html" class="copy-btn px-5 py-3 btn-secondary rounded-xl text-sm whitespace-nowrap">HTML</button>
-                    </div>
-                  </div>
+                <div id="preview-list"
+                  class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 max-h-96 overflow-y-auto"></div>
+                <div class="flex gap-3 justify-end">
+                  <button id="preview-cancel" class="px-6 py-3 btn-secondary rounded-xl font-semibold">取消</button>
+                  <button id="preview-confirm" class="px-6 py-3 btn-primary rounded-xl font-semibold">🚀 开始上传</button>
                 </div>
               </div>
-            </div>
 
-            <div id="files-view" class="app-view hidden space-y-6">
-              <div class="card rounded-3xl p-8 animate-in">
-                <div class="flex items-center gap-3 mb-6">
-                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style="background: linear-gradient(135deg, #8bd3dd 0%, #a5dde5 100%);">📁</div>
-                  <h3 class="text-xl font-bold" style="color: var(--color-headline);">文件管理</h3>
+              <div id="upload-progress" class="hidden mt-8">
+                <div class="flex items-center justify-between text-sm font-semibold mb-3"
+                  style="color: var(--color-paragraph);">
+                  <span>上传中...</span>
+                  <span id="progress-text">0%</span>
                 </div>
-
-                <div class="flex flex-wrap items-center gap-3 justify-between mb-6">
-                  <div class="text-sm font-medium" id="breadcrumb" style="color: var(--color-paragraph);"></div>
-                  <div class="flex flex-wrap gap-2">
-                    <button id="btn-refresh" class="px-4 py-2 rounded-xl btn-secondary text-sm">🔄 刷新</button>
-                    <button id="btn-create-folder" class="px-4 py-2 rounded-xl btn-primary text-sm">➕ 新建文件夹</button>
-                    <button id="btn-delete-selected" class="px-4 py-2 rounded-xl btn-danger text-sm">🗑️ 删除选中</button>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-3 mb-6">
-                  <input id="search-input" type="search" placeholder="🔍 搜索文件名..." class="flex-1 px-4 py-3 rounded-xl text-sm" />
-                  <span class="badge" id="files-meta"></span>
-                </div>
-
-                <div id="folders-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6"></div>
-                <div id="files-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-              </div>
-            </div>
-
-            <div id="history-view" class="app-view hidden">
-              <div class="card rounded-3xl p-8 animate-in">
-                <div class="flex items-center gap-3 mb-6">
-                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style="background: linear-gradient(135deg, #f3d2c1 0%, #fef6e4 100%);">📜</div>
-                  <h3 class="text-xl font-bold" style="color: var(--color-headline);">历史上传直链</h3>
-                  <button id="btn-history-refresh" class="ml-auto px-4 py-2 rounded-xl btn-secondary text-sm">🔄 刷新</button>
-                </div>
-                <div class="flex items-center gap-3 mb-6">
-                  <input id="history-search" type="search" placeholder="🔍 搜索文件..." class="flex-1 px-4 py-3 rounded-xl text-sm" />
-                  <span class="badge" id="history-meta"></span>
-                </div>
-                <div class="overflow-auto rounded-2xl max-h-[600px]" style="border: 2px solid rgba(139, 211, 221, 0.2);">
-                  <table class="min-w-full text-left text-sm">
-                    <thead class="sticky top-0 text-xs uppercase tracking-wider font-semibold" style="background: linear-gradient(135deg, rgba(139, 211, 221, 0.3) 0%, rgba(243, 210, 193, 0.3) 100%); color: var(--color-headline);">
-                      <tr>
-                        <th class="px-5 py-4">文件名</th>
-                        <th class="px-5 py-4">存储路径</th>
-                        <th class="px-5 py-4">上传时间</th>
-                        <th class="px-5 py-4">类型</th>
-                        <th class="px-5 py-4">大小</th>
-                        <th class="px-5 py-4 text-right">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody id="history-table" style="background: rgba(255, 255, 255, 0.5);">
-                      <tr>
-                        <td colspan="6" class="px-5 py-8 text-center" style="color: var(--color-paragraph);">加载中...</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div class="w-full h-3 rounded-full" style="background: rgba(139, 211, 221, 0.2);">
+                  <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
                 </div>
               </div>
-            </div>
 
-            <div id="settings-view" class="app-view hidden">
-              <div class="card rounded-3xl p-8 animate-in space-y-8">
-                <div>
-                  <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style="background: linear-gradient(135deg, #f582ae 0%, #f89dc4 100%);">📊</div>
-                    <h3 class="text-xl font-bold" style="color: var(--color-headline);">统计信息</h3>
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="stats-grid">
-                    <div class="stat-card p-6 rounded-2xl">
-                      <div class="flex items-center justify-between mb-3">
-                        <span class="text-3xl">📁</span>
-                        <span class="badge text-xs">FILES</span>
-                      </div>
-                      <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--color-paragraph); opacity: 0.7;">文件总数</p>
-                      <p id="stats-total-files" class="text-4xl font-bold" style="color: var(--color-headline);">-</p>
-                    </div>
-                    <div class="stat-card p-6 rounded-2xl">
-                      <div class="flex items-center justify-between mb-3">
-                        <span class="text-3xl">💾</span>
-                        <span class="badge text-xs">STORAGE</span>
-                      </div>
-                      <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--color-paragraph); opacity: 0.7;">存储用量</p>
-                      <p id="stats-total-size" class="text-4xl font-bold" style="color: var(--color-headline);">-</p>
-                    </div>
-                    <div class="stat-card p-6 rounded-2xl">
-                      <div class="flex items-center justify-between mb-3">
-                        <span class="text-3xl">⏰</span>
-                        <span class="badge text-xs">RECENT</span>
-                      </div>
-                      <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--color-paragraph); opacity: 0.7;">最近上传</p>
-                      <p id="stats-recent" class="text-sm font-medium mt-2 truncate" style="color: var(--color-paragraph);">-</p>
+              <div id="upload-result" class="hidden mt-8 card rounded-2xl p-6 space-y-4 animate-in">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl">✅</span>
+                    <div>
+                      <p class="text-sm font-semibold" style="color: var(--color-button);">上传成功</p>
+                      <p id="result-key" class="text-sm font-medium" style="color: var(--color-paragraph);"></p>
                     </div>
                   </div>
+                  <button id="result-close" class="text-2xl hover:opacity-70 transition-opacity"
+                    style="color: var(--color-paragraph);">×</button>
                 </div>
-
-                <div class="card rounded-2xl p-6" style="background: linear-gradient(135deg, rgba(139, 211, 221, 0.1) 0%, rgba(243, 210, 193, 0.1) 100%);">
-                  <div class="flex items-center gap-2 mb-4">
-                    <span class="text-2xl">🔒</span>
-                    <h3 class="text-lg font-bold" style="color: var(--color-headline);">安全提示</h3>
+                <img id="result-preview" src="" alt="预览" class="w-full max-h-80 object-cover rounded-xl"
+                  style="border: 2px solid rgba(139, 211, 221, 0.3);" />
+                <div class="grid gap-3">
+                  <div class="flex gap-2">
+                    <input id="link-direct" readonly class="flex-1 px-4 py-3 rounded-xl text-sm"
+                      style="background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(139, 211, 221, 0.2);" />
+                    <button data-target="link-direct"
+                      class="copy-btn px-5 py-3 btn-secondary rounded-xl text-sm whitespace-nowrap">复制直链</button>
                   </div>
-                  <ul class="text-sm space-y-3" style="color: var(--color-paragraph);">
-                    <li class="flex items-start gap-2">
-                      <span class="text-lg">•</span>
-                      <span>生产环境请将 <code class="px-2 py-1 rounded text-xs font-mono" style="background: rgba(0, 24, 88, 0.1);">APP_PASSWORD</code> 使用哈希存储并定期更换。</span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                      <span class="text-lg">•</span>
-                      <span>建议为公开域名配置 CORS 白名单。</span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                      <span class="text-lg">•</span>
-                      <span>配合 Cloudflare 防火墙或 Turnstile 进一步防护。</span>
-                    </li>
-                  </ul>
+                  <div class="flex gap-2">
+                    <input id="link-markdown" readonly class="flex-1 px-4 py-3 rounded-xl text-sm"
+                      style="background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(139, 211, 221, 0.2);" />
+                    <button data-target="link-markdown"
+                      class="copy-btn px-5 py-3 btn-secondary rounded-xl text-sm whitespace-nowrap">Markdown</button>
+                  </div>
+                  <div class="flex gap-2">
+                    <input id="link-html" readonly class="flex-1 px-4 py-3 rounded-xl text-sm"
+                      style="background: rgba(255, 255, 255, 0.6); border: 2px solid rgba(139, 211, 221, 0.2);" />
+                    <button data-target="link-html"
+                      class="copy-btn px-5 py-3 btn-secondary rounded-xl text-sm whitespace-nowrap">HTML</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </section>
-      </main>
-    </div>
 
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full toast text-sm font-medium shadow-2xl hidden z-50"></div>
+          <div id="files-view" class="app-view hidden space-y-6">
+            <div class="card rounded-3xl p-8 animate-in">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl"
+                  style="background: linear-gradient(135deg, #8bd3dd 0%, #a5dde5 100%);">📁</div>
+                <h3 class="text-xl font-bold" style="color: var(--color-headline);">文件管理</h3>
+              </div>
 
-    <script>
-      const state = {
-        token: localStorage.getItem('token') || null,
-        currentPath: '',
-        files: [],
-        folders: [],
-        filteredFiles: [],
-        history: [],
-        filteredHistory: [],
-        selected: new Set(),
-        pendingFiles: [],
-      };
+              <div class="flex flex-wrap items-center gap-3 justify-between mb-6">
+                <div class="text-sm font-medium" id="breadcrumb" style="color: var(--color-paragraph);"></div>
+                <div class="flex flex-wrap gap-2">
+                  <button id="btn-refresh" class="px-4 py-2 rounded-xl btn-secondary text-sm">🔄 刷新</button>
+                  <button id="btn-create-folder" class="px-4 py-2 rounded-xl btn-primary text-sm">➕ 新建文件夹</button>
+                  <button id="btn-delete-selected" class="px-4 py-2 rounded-xl btn-danger text-sm">🗑️ 删除选中</button>
+                </div>
+              </div>
 
-      const dom = {};
+              <div class="flex items-center gap-3 mb-6">
+                <input id="search-input" type="search" placeholder="🔍 搜索文件名..."
+                  class="flex-1 px-4 py-3 rounded-xl text-sm" />
+                <span class="badge" id="files-meta"></span>
+                <div style="position: relative;">
+                  <button id="columns-toggle" title="每行显示数量"
+                    class="w-9 h-9 rounded-xl flex items-center justify-center text-base cursor-pointer transition-all"
+                    style="background: rgba(255,255,255,0.8); border: 2px solid rgba(139,211,221,0.3); color: var(--color-paragraph);">
+                    ▦
+                  </button>
+                  <div id="columns-dropdown" class="columns-dropdown hidden"></div>
+                </div>
+              </div>
 
-      function $(id) {
-        return document.getElementById(id);
+              <div id="folders-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6"></div>
+              <div id="files-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            </div>
+          </div>
+
+          <div id="history-view" class="app-view hidden">
+            <div class="card rounded-3xl p-8 animate-in">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl"
+                  style="background: linear-gradient(135deg, #f3d2c1 0%, #fef6e4 100%);">📜</div>
+                <h3 class="text-xl font-bold" style="color: var(--color-headline);">历史上传直链</h3>
+                <button id="btn-history-refresh" class="ml-auto px-4 py-2 rounded-xl btn-secondary text-sm">🔄
+                  刷新</button>
+              </div>
+              <div class="flex items-center gap-3 mb-6">
+                <input id="history-search" type="search" placeholder="🔍 搜索文件..."
+                  class="flex-1 px-4 py-3 rounded-xl text-sm" />
+                <span class="badge" id="history-meta"></span>
+              </div>
+              <div class="overflow-auto rounded-2xl max-h-[600px]" style="border: 2px solid rgba(139, 211, 221, 0.2);">
+                <table class="min-w-full text-left text-sm">
+                  <thead class="sticky top-0 text-xs uppercase tracking-wider font-semibold"
+                    style="background: linear-gradient(135deg, rgba(139, 211, 221, 0.3) 0%, rgba(243, 210, 193, 0.3) 100%); color: var(--color-headline);">
+                    <tr>
+                      <th class="px-5 py-4">文件名</th>
+                      <th class="px-5 py-4">存储路径</th>
+                      <th class="px-5 py-4">上传时间</th>
+                      <th class="px-5 py-4">类型</th>
+                      <th class="px-5 py-4">大小</th>
+                      <th class="px-5 py-4 text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-table" style="background: rgba(255, 255, 255, 0.5);">
+                    <tr>
+                      <td colspan="6" class="px-5 py-8 text-center" style="color: var(--color-paragraph);">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="settings-view" class="app-view hidden">
+            <div class="card rounded-3xl p-8 animate-in space-y-8">
+              <div>
+                <div class="flex items-center gap-3 mb-6">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl"
+                    style="background: linear-gradient(135deg, #f582ae 0%, #f89dc4 100%);">📊</div>
+                  <h3 class="text-xl font-bold" style="color: var(--color-headline);">统计信息</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="stats-grid">
+                  <div class="stat-card p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="text-3xl">📁</span>
+                      <span class="badge text-xs">FILES</span>
+                    </div>
+                    <p class="text-xs font-semibold uppercase tracking-wide mb-2"
+                      style="color: var(--color-paragraph); opacity: 0.7;">文件总数</p>
+                    <p id="stats-total-files" class="text-4xl font-bold" style="color: var(--color-headline);">-</p>
+                  </div>
+                  <div class="stat-card p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="text-3xl">💾</span>
+                      <span class="badge text-xs">STORAGE</span>
+                    </div>
+                    <p class="text-xs font-semibold uppercase tracking-wide mb-2"
+                      style="color: var(--color-paragraph); opacity: 0.7;">存储用量</p>
+                    <p id="stats-total-size" class="text-4xl font-bold" style="color: var(--color-headline);">-</p>
+                  </div>
+                  <div class="stat-card p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="text-3xl">⏰</span>
+                      <span class="badge text-xs">RECENT</span>
+                    </div>
+                    <p class="text-xs font-semibold uppercase tracking-wide mb-2"
+                      style="color: var(--color-paragraph); opacity: 0.7;">最近上传</p>
+                    <p id="stats-recent" class="text-sm font-medium mt-2 truncate"
+                      style="color: var(--color-paragraph);">-</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card rounded-2xl p-6"
+                style="background: linear-gradient(135deg, rgba(139, 211, 221, 0.1) 0%, rgba(243, 210, 193, 0.1) 100%);">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="text-2xl">🔒</span>
+                  <h3 class="text-lg font-bold" style="color: var(--color-headline);">安全提示</h3>
+                </div>
+                <ul class="text-sm space-y-3" style="color: var(--color-paragraph);">
+                  <li class="flex items-start gap-2">
+                    <span class="text-lg">•</span>
+                    <span>生产环境请将 <code class="px-2 py-1 rounded text-xs font-mono"
+                        style="background: rgba(0, 24, 88, 0.1);">APP_PASSWORD</code> 使用哈希存储并定期更换。</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-lg">•</span>
+                    <span>建议为公开域名配置 CORS 白名单。</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-lg">•</span>
+                    <span>配合 Cloudflare 防火墙或 Turnstile 进一步防护。</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast"
+    class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full toast text-sm font-medium shadow-2xl hidden z-50">
+  </div>
+
+  <script>
+    /** 每行显示数量的可选值 */
+    const COLUMNS_OPTIONS = [2, 3, 4, 5, 6, 8, 10];
+
+    const state = {
+      token: localStorage.getItem('token') || null,
+      currentPath: '',
+      files: [],
+      folders: [],
+      filteredFiles: [],
+      history: [],
+      filteredHistory: [],
+      selected: new Set(),
+      selectedFolders: new Set(),
+      pendingFiles: [],
+      /** 每行显示的图片列数，从 localStorage 恢复 */
+      columnsPerRow: parseInt(localStorage.getItem('columnsPerRow') || '3', 10),
+    };
+
+    const dom = {};
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function initDom() {
+      dom.loginSection = $('login-section');
+      dom.appSection = $('app-section');
+      dom.nav = document.querySelectorAll('.nav-btn');
+      dom.mainNav = $('main-nav');
+      dom.logout = $('logout-btn');
+      dom.dropZone = $('drop-zone');
+      dom.fileInput = $('file-input');
+      dom.uploadPreview = $('upload-preview');
+      dom.previewList = $('preview-list');
+      dom.previewCount = $('preview-count');
+      dom.previewClose = $('preview-close');
+      dom.previewCancel = $('preview-cancel');
+      dom.previewConfirm = $('preview-confirm');
+      dom.uploadProgress = $('upload-progress');
+      dom.progressBar = $('progress-bar');
+      dom.progressText = $('progress-text');
+      dom.uploadResult = $('upload-result');
+      dom.resultKey = $('result-key');
+      dom.resultPreview = $('result-preview');
+      dom.linkDirect = $('link-direct');
+      dom.linkMarkdown = $('link-markdown');
+      dom.linkHtml = $('link-html');
+      dom.resultClose = $('result-close');
+      dom.breadcrumb = $('breadcrumb');
+      dom.filesContainer = $('files-container');
+      dom.foldersContainer = $('folders-container');
+      dom.filesMeta = $('files-meta');
+      dom.searchInput = $('search-input');
+      dom.historyTable = $('history-table');
+      dom.historyMeta = $('history-meta');
+      dom.historySearch = $('history-search');
+      dom.statsTotalFiles = $('stats-total-files');
+      dom.statsTotalSize = $('stats-total-size');
+      dom.statsRecent = $('stats-recent');
+      dom.columnsToggle = $('columns-toggle');
+      dom.columnsDropdown = $('columns-dropdown');
+    }
+
+    function showToast(message, duration = 2200) {
+      const toast = $('toast');
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => toast.classList.add('hidden'), duration);
+    }
+
+    function setActiveNav(section) {
+      dom.nav.forEach((btn) => {
+        btn.classList.toggle(
+          'active',
+          btn.dataset.section === section,
+        );
+      });
+      document.querySelectorAll('.app-view').forEach((view) => {
+        view.classList.toggle('hidden', view.id !== `${section}-view`);
+      });
+    }
+
+    function showApp() {
+      dom.loginSection.classList.add('hidden');
+      dom.appSection.classList.remove('hidden');
+      dom.mainNav.hidden = false;
+      dom.logout.classList.remove('hidden');
+      setActiveNav('upload');
+    }
+
+    function showLogin() {
+      state.token = null;
+      localStorage.removeItem('token');
+      dom.loginSection.classList.remove('hidden');
+      dom.appSection.classList.add('hidden');
+      dom.mainNav.hidden = true;
+      dom.logout.classList.add('hidden');
+    }
+
+    /**
+     * 根据列数生成 Tailwind 的 grid-cols class
+     * @param {number} count - 每行列数
+     * @returns {string} grid-cols class 名称
+     */
+    function getGridColsClass(count) {
+      return `grid-cols-${count}`;
+    }
+
+    /**
+     * 应用网格列数设置到文件容器
+     * @param {number} count - 每行列数
+     */
+    function applyGridColumns(count) {
+      const gridClass = getGridColsClass(count);
+      dom.filesContainer.className = `grid ${gridClass} gap-5`;
+    }
+
+    /**
+     * 渲染列数选择下拉菜单内容
+     * 为每个可选列数生成一个选项按钮
+     */
+    function renderColumnsDropdown() {
+      dom.columnsDropdown.innerHTML = '';
+
+      COLUMNS_OPTIONS.forEach((count) => {
+        const item = document.createElement('button');
+        item.className = `columns-dropdown-item${count === state.columnsPerRow ? ' active' : ''}`;
+        item.dataset.count = count;
+
+        // 生成小网格图标
+        const gridHtml = Array.from({ length: count }, () => '<span></span>').join('');
+
+        item.innerHTML = `
+          <div class="icon-grid" style="grid-template-columns: repeat(${count}, 1fr);">${gridHtml}</div>
+          <span>${count} 列</span>
+        `;
+
+        item.addEventListener('click', () => setColumnsPerRow(count));
+        dom.columnsDropdown.appendChild(item);
+      });
+    }
+
+    /**
+     * 设置每行显示的列数并持久化到 localStorage
+     * @param {number} count - 每行列数
+     */
+    function setColumnsPerRow(count) {
+      state.columnsPerRow = count;
+      localStorage.setItem('columnsPerRow', String(count));
+      applyGridColumns(count);
+      renderColumnsDropdown();
+      dom.columnsDropdown.classList.add('hidden');
+      console.log('Grid columns updated to', count);
+    }
+
+    async function apiFetch(path, options = {}) {
+      const headers = new Headers(options.headers || {});
+      if (state.token) {
+        headers.set('Authorization', `Bearer ${state.token}`);
+      }
+      const response = await fetch(path, { ...options, headers });
+      if (response.status === 401) {
+        showToast('⚠️ 身份已过期，请重新登录');
+        showLogin();
+        return null;
+      }
+      return response;
+    }
+
+    async function login() {
+      const password = $('password').value.trim();
+      if (!password) {
+        $('login-error').textContent = '请输入密码';
+        $('login-error').classList.remove('hidden');
+        return;
       }
 
-      function initDom() {
-        dom.loginSection = $('login-section');
-        dom.appSection = $('app-section');
-        dom.nav = document.querySelectorAll('.nav-btn');
-        dom.mainNav = $('main-nav');
-        dom.logout = $('logout-btn');
-        dom.dropZone = $('drop-zone');
-        dom.fileInput = $('file-input');
-        dom.uploadPreview = $('upload-preview');
-        dom.previewList = $('preview-list');
-        dom.previewCount = $('preview-count');
-        dom.previewClose = $('preview-close');
-        dom.previewCancel = $('preview-cancel');
-        dom.previewConfirm = $('preview-confirm');
-        dom.uploadProgress = $('upload-progress');
-        dom.progressBar = $('progress-bar');
-        dom.progressText = $('progress-text');
-        dom.uploadResult = $('upload-result');
-        dom.resultKey = $('result-key');
-        dom.resultPreview = $('result-preview');
-        dom.linkDirect = $('link-direct');
-        dom.linkMarkdown = $('link-markdown');
-        dom.linkHtml = $('link-html');
-        dom.resultClose = $('result-close');
-        dom.breadcrumb = $('breadcrumb');
-        dom.filesContainer = $('files-container');
-        dom.foldersContainer = $('folders-container');
-        dom.filesMeta = $('files-meta');
-        dom.searchInput = $('search-input');
-        dom.historyTable = $('history-table');
-        dom.historyMeta = $('history-meta');
-        dom.historySearch = $('history-search');
-        dom.statsTotalFiles = $('stats-total-files');
-        dom.statsTotalSize = $('stats-total-size');
-        dom.statsRecent = $('stats-recent');
-      }
+      $('login-btn').disabled = true;
+      $('login-error').classList.add('hidden');
 
-      function showToast(message, duration = 2200) {
-        const toast = $('toast');
-        toast.textContent = message;
-        toast.classList.remove('hidden');
-        clearTimeout(toast.timer);
-        toast.timer = setTimeout(() => toast.classList.add('hidden'), duration);
-      }
-
-      function setActiveNav(section) {
-        dom.nav.forEach((btn) => {
-          btn.classList.toggle(
-            'active',
-            btn.dataset.section === section,
-          );
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
         });
-        document.querySelectorAll('.app-view').forEach((view) => {
-          view.classList.toggle('hidden', view.id !== `${section}-view`);
-        });
-      }
 
-      function showApp() {
-        dom.loginSection.classList.add('hidden');
-        dom.appSection.classList.remove('hidden');
-        dom.mainNav.hidden = false;
-        dom.logout.classList.remove('hidden');
-        setActiveNav('upload');
-      }
-
-      function showLogin() {
-        state.token = null;
-        localStorage.removeItem('token');
-        dom.loginSection.classList.remove('hidden');
-        dom.appSection.classList.add('hidden');
-        dom.mainNav.hidden = true;
-        dom.logout.classList.add('hidden');
-      }
-
-      async function apiFetch(path, options = {}) {
-        const headers = new Headers(options.headers || {});
-        if (state.token) {
-          headers.set('Authorization', `Bearer ${state.token}`);
-        }
-        const response = await fetch(path, { ...options, headers });
-        if (response.status === 401) {
-          showToast('⚠️ 身份已过期，请重新登录');
-          showLogin();
-          return null;
-        }
-        return response;
-      }
-
-      async function login() {
-        const password = $('password').value.trim();
-        if (!password) {
-          $('login-error').textContent = '请输入密码';
-          $('login-error').classList.remove('hidden');
-          return;
+        const data = await res.json();
+        if (!res.ok || !data.token) {
+          throw new Error(data.error || '登录失败');
         }
 
-        $('login-btn').disabled = true;
-        $('login-error').classList.add('hidden');
+        state.token = data.token;
+        localStorage.setItem('token', data.token);
+        showApp();
+        await loadFiles();
+        await loadStats();
+      } catch (err) {
+        $('login-error').textContent = err.message;
+        $('login-error').classList.remove('hidden');
+      } finally {
+        $('login-btn').disabled = false;
+      }
+    }
 
-        try {
-          const res = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password }),
-          });
+    function handleFileSelect(files) {
+      if (!files || files.length === 0) return;
 
-          const data = await res.json();
-          if (!res.ok || !data.token) {
-            throw new Error(data.error || '登录失败');
-          }
+      // 转换为数组并过滤图片文件
+      const fileArray = Array.from(files).filter(file => {
+        return file.type.startsWith('image/');
+      });
 
-          state.token = data.token;
-          localStorage.setItem('token', data.token);
-          showApp();
-          await loadFiles();
-          await loadStats();
-        } catch (err) {
-          $('login-error').textContent = err.message;
-          $('login-error').classList.remove('hidden');
-        } finally {
-          $('login-btn').disabled = false;
-        }
+      if (fileArray.length === 0) {
+        showToast('⚠️ 请选择图片文件');
+        return;
       }
 
-      function handleFileSelect(files) {
-        if (!files || files.length === 0) return;
-        
-        // 转换为数组并过滤图片文件
-        const fileArray = Array.from(files).filter(file => {
-          return file.type.startsWith('image/');
-        });
+      state.pendingFiles = fileArray;
+      showUploadPreview();
+    }
 
-        if (fileArray.length === 0) {
-          showToast('⚠️ 请选择图片文件');
-          return;
-        }
+    function showUploadPreview() {
+      if (state.pendingFiles.length === 0) return;
 
-        state.pendingFiles = fileArray;
-        showUploadPreview();
-      }
+      dom.previewCount.textContent = state.pendingFiles.length;
+      dom.previewList.innerHTML = '';
 
-      function showUploadPreview() {
-        if (state.pendingFiles.length === 0) return;
+      state.pendingFiles.forEach((file, index) => {
+        const card = document.createElement('div');
+        card.className = 'relative file-card rounded-xl overflow-hidden';
 
-        dom.previewCount.textContent = state.pendingFiles.length;
-        dom.previewList.innerHTML = '';
-
-        state.pendingFiles.forEach((file, index) => {
-          const card = document.createElement('div');
-          card.className = 'relative file-card rounded-xl overflow-hidden';
-          
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            card.innerHTML = `
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          card.innerHTML = `
               <div class="file-thumbnail h-32 flex items-center justify-center overflow-hidden">
                 <img src="${e.target.result}" alt="${file.name}" class="w-full h-full object-cover" />
               </div>
@@ -654,296 +841,328 @@
               <button class="remove-preview absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white font-bold" style="background: rgba(255, 107, 157, 0.9);" data-index="${index}">×</button>
             `;
 
-            const removeBtn = card.querySelector('.remove-preview');
-            removeBtn.addEventListener('click', () => {
-              state.pendingFiles.splice(index, 1);
-              if (state.pendingFiles.length === 0) {
-                cancelPreview();
-              } else {
-                showUploadPreview();
-              }
-            });
-          };
-          reader.readAsDataURL(file);
-          
-          dom.previewList.appendChild(card);
-        });
-
-        dom.uploadPreview.classList.remove('hidden');
-        dom.uploadResult.classList.add('hidden');
-      }
-
-      function cancelPreview() {
-        state.pendingFiles = [];
-        dom.uploadPreview.classList.add('hidden');
-        dom.fileInput.value = '';
-      }
-
-      async function confirmUpload() {
-        if (state.pendingFiles.length === 0) return;
-
-        const files = state.pendingFiles;
-        cancelPreview();
-
-        dom.uploadProgress.classList.remove('hidden');
-        dom.progressBar.style.width = '0%';
-        dom.progressText.textContent = '0%';
-
-        for (let index = 0; index < files.length; index += 1) {
-          const file = files[index];
-          const formData = new FormData();
-          formData.append('file', file);
-          if (state.currentPath) {
-            formData.append('path', state.currentPath);
-          }
-
-          try {
-            dom.progressText.textContent = `上传中 ${index + 1}/${files.length}`;
-            const res = await apiFetch('/api/upload', {
-              method: 'POST',
-              body: formData,
-            });
-            if (!res) return;
-            const data = await res.json();
-            if (!res.ok) {
-              throw new Error(data.error || '上传失败');
+          const removeBtn = card.querySelector('.remove-preview');
+          removeBtn.addEventListener('click', () => {
+            state.pendingFiles.splice(index, 1);
+            if (state.pendingFiles.length === 0) {
+              cancelPreview();
+            } else {
+              showUploadPreview();
             }
+          });
+        };
+        reader.readAsDataURL(file);
 
-            dom.progressBar.style.width = `${Math.round(((index + 1) / files.length) * 100)}%`;
-            dom.progressText.textContent = `${Math.round(((index + 1) / files.length) * 100)}%`;
-            
-            // 只显示最后一个上传结果
-            if (index === files.length - 1) {
-              showUploadResult(data.data || data);
-            }
-          } catch (err) {
-            showToast('❌ ' + (err.message || '上传失败'));
+        dom.previewList.appendChild(card);
+      });
+
+      dom.uploadPreview.classList.remove('hidden');
+      dom.uploadResult.classList.add('hidden');
+    }
+
+    function cancelPreview() {
+      state.pendingFiles = [];
+      dom.uploadPreview.classList.add('hidden');
+      dom.fileInput.value = '';
+    }
+
+    async function confirmUpload() {
+      if (state.pendingFiles.length === 0) return;
+
+      const files = state.pendingFiles;
+      cancelPreview();
+
+      dom.uploadProgress.classList.remove('hidden');
+      dom.progressBar.style.width = '0%';
+      dom.progressText.textContent = '0%';
+
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        const formData = new FormData();
+        formData.append('file', file);
+        if (state.currentPath) {
+          formData.append('path', state.currentPath);
+        }
+
+        try {
+          dom.progressText.textContent = `上传中 ${index + 1}/${files.length}`;
+          const res = await apiFetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!res) return;
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || '上传失败');
+          }
+
+          dom.progressBar.style.width = `${Math.round(((index + 1) / files.length) * 100)}%`;
+          dom.progressText.textContent = `${Math.round(((index + 1) / files.length) * 100)}%`;
+
+          // 只显示最后一个上传结果
+          if (index === files.length - 1) {
+            showUploadResult(data.data || data);
+          }
+        } catch (err) {
+          showToast('❌ ' + (err.message || '上传失败'));
+        }
+      }
+
+      setTimeout(() => {
+        dom.uploadProgress.classList.add('hidden');
+        if (files.length > 1) {
+          showToast(`✅ 成功上传 ${files.length} 个文件`);
+        }
+      }, 500);
+
+      await loadFiles(state.currentPath);
+    }
+
+    function handlePaste(event) {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            // 生成文件名
+            const timestamp = new Date().getTime();
+            const ext = file.type.split('/')[1] || 'png';
+            const newFile = new File([file], `pasted-${timestamp}.${ext}`, { type: file.type });
+            imageFiles.push(newFile);
           }
         }
-
-        setTimeout(() => {
-          dom.uploadProgress.classList.add('hidden');
-          if (files.length > 1) {
-            showToast(`✅ 成功上传 ${files.length} 个文件`);
-          }
-        }, 500);
-
-        await loadFiles(state.currentPath);
       }
 
-      function handlePaste(event) {
-        const items = event.clipboardData?.items;
-        if (!items) return;
-
-        const imageFiles = [];
-        for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          if (item.type.startsWith('image/')) {
-            const file = item.getAsFile();
-            if (file) {
-              // 生成文件名
-              const timestamp = new Date().getTime();
-              const ext = file.type.split('/')[1] || 'png';
-              const newFile = new File([file], `pasted-${timestamp}.${ext}`, { type: file.type });
-              imageFiles.push(newFile);
-            }
-          }
-        }
-
-        if (imageFiles.length > 0) {
-          event.preventDefault();
-          handleFileSelect(imageFiles);
-          showToast(`📋 已粘贴 ${imageFiles.length} 张图片`);
-        }
+      if (imageFiles.length > 0) {
+        event.preventDefault();
+        handleFileSelect(imageFiles);
+        showToast(`📋 已粘贴 ${imageFiles.length} 张图片`);
       }
+    }
 
-      function showUploadResult(info) {
-        if (!info) return;
-        dom.uploadResult.classList.remove('hidden');
-        dom.resultKey.textContent = info.key;
-        if (info.url) {
-          dom.resultPreview.src = info.url;
-          dom.linkDirect.value = info.url;
-          dom.linkMarkdown.value = `![${info.filename}](${info.url})`;
-          dom.linkHtml.value = `<img src="${info.url}" alt="${info.filename}" />`;
-        } else {
-          dom.resultPreview.src = '';
-          dom.linkDirect.value = window.location.origin + '/' + info.key;
-        }
+    function showUploadResult(info) {
+      if (!info) return;
+      dom.uploadResult.classList.remove('hidden');
+      dom.resultKey.textContent = info.key;
+      if (info.url) {
+        dom.resultPreview.src = info.url;
+        dom.linkDirect.value = info.url;
+        dom.linkMarkdown.value = `![${info.filename}](${info.url})`;
+        dom.linkHtml.value = `<img src="${info.url}" alt="${info.filename}" />`;
+      } else {
+        dom.resultPreview.src = '';
+        dom.linkDirect.value = window.location.origin + '/' + info.key;
       }
+    }
 
-      async function loadFiles(prefix = '') {
-        const normalized = prefix ? prefix.replace(/\/+$/, '') : '';
-        const finalPrefix = normalized ? `${normalized}/` : '';
-        const query = finalPrefix ? `?prefix=${encodeURIComponent(finalPrefix)}` : '';
-        const res = await apiFetch(`/api/files${query}`);
-        if (!res) return;
-        const payload = await res.json();
-        if (!res.ok) {
-          showToast(payload.error || '加载失败');
-          return;
-        }
-        const data = payload.data || payload;
-        state.currentPath = finalPrefix;
-        state.files = data.files || [];
-        state.folders = data.folders || [];
-        state.filteredFiles = state.files;
-        state.selected.clear();
-        renderBreadcrumb();
-        renderFolders();
-        renderFiles();
+    async function loadFiles(prefix = '') {
+      const normalized = prefix ? prefix.replace(/\/+$/, '') : '';
+      const finalPrefix = normalized ? `${normalized}/` : '';
+      const query = finalPrefix ? `?prefix=${encodeURIComponent(finalPrefix)}` : '';
+      const res = await apiFetch(`/api/files${query}`);
+      if (!res) return;
+      const payload = await res.json();
+      if (!res.ok) {
+        showToast(payload.error || '加载失败');
+        return;
       }
+      const data = payload.data || payload;
+      state.currentPath = finalPrefix;
+      state.files = data.files || [];
+      state.folders = data.folders || [];
+      state.filteredFiles = state.files;
+      state.selected.clear();
+      state.selectedFolders.clear();
+      renderBreadcrumb();
+      renderFolders();
+      renderFiles();
+    }
 
-      async function loadStats() {
-        const res = await apiFetch('/api/stats');
-        if (!res) return;
-        const payload = await res.json();
-        if (!res.ok) {
-          showToast(payload.error || '获取统计失败');
-          return;
-        }
-        const data = payload.data || payload;
-        dom.statsTotalFiles.textContent = data.totalFiles ?? '-';
-        dom.statsTotalSize.textContent = data.totalSizeFormatted ?? '-';
-        dom.statsRecent.textContent = data.recentUploads?.[0]?.key || '暂无';
+    async function loadStats() {
+      const res = await apiFetch('/api/stats');
+      if (!res) return;
+      const payload = await res.json();
+      if (!res.ok) {
+        showToast(payload.error || '获取统计失败');
+        return;
       }
+      const data = payload.data || payload;
+      dom.statsTotalFiles.textContent = data.totalFiles ?? '-';
+      dom.statsTotalSize.textContent = data.totalSizeFormatted ?? '-';
+      dom.statsRecent.textContent = data.recentUploads?.[0]?.key || '暂无';
+    }
 
-      async function loadHistory() {
-        const res = await apiFetch('/api/history?limit=500');
-        if (!res) return;
-        const payload = await res.json();
-        if (!res.ok) {
-          showToast(payload.error || '加载历史失败');
-          return;
-        }
-        const data = payload.data || payload;
-        state.history = data.files || [];
-        state.filteredHistory = state.history;
-        renderHistory();
+    async function loadHistory() {
+      const res = await apiFetch('/api/history?limit=500');
+      if (!res) return;
+      const payload = await res.json();
+      if (!res.ok) {
+        showToast(payload.error || '加载历史失败');
+        return;
       }
+      const data = payload.data || payload;
+      state.history = data.files || [];
+      state.filteredHistory = state.history;
+      renderHistory();
+    }
 
-      function renderHistory() {
-        const search = dom.historySearch.value.trim().toLowerCase();
-        state.filteredHistory = state.history.filter((file) => {
-          if (!search) return true;
-          return (
-            file.name?.toLowerCase().includes(search) ||
-            file.key?.toLowerCase().includes(search) ||
-            file.uploaded?.toLowerCase().includes(search)
-          );
-        });
+    function renderHistory() {
+      const search = dom.historySearch.value.trim().toLowerCase();
+      state.filteredHistory = state.history.filter((file) => {
+        if (!search) return true;
+        return (
+          file.name?.toLowerCase().includes(search) ||
+          file.key?.toLowerCase().includes(search) ||
+          file.uploaded?.toLowerCase().includes(search)
+        );
+      });
 
-        dom.historyMeta.textContent = `${state.filteredHistory.length} 条记录`;
-        dom.historyTable.innerHTML = '';
+      dom.historyMeta.textContent = `${state.filteredHistory.length} 条记录`;
+      dom.historyTable.innerHTML = '';
 
-        if (state.filteredHistory.length === 0) {
-          const emptyRow = document.createElement('tr');
-          emptyRow.innerHTML = `
+      if (state.filteredHistory.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
             <td colspan="6" class="px-5 py-8 text-center" style="color: var(--color-paragraph);">暂无记录</td>
           `;
-          dom.historyTable.appendChild(emptyRow);
-          return;
-        }
+        dom.historyTable.appendChild(emptyRow);
+        return;
+      }
 
-        state.filteredHistory.forEach((file) => {
-          const row = document.createElement('tr');
-          row.className = 'transition';
-          row.style.cssText = 'border-bottom: 1px solid rgba(139, 211, 221, 0.1);';
-          row.addEventListener('mouseenter', () => {
-            row.style.background = 'rgba(139, 211, 221, 0.1)';
-          });
-          row.addEventListener('mouseleave', () => {
-            row.style.background = '';
-          });
+      state.filteredHistory.forEach((file) => {
+        const row = document.createElement('tr');
+        row.className = 'transition';
+        row.style.cssText = 'border-bottom: 1px solid rgba(139, 211, 221, 0.1);';
+        row.addEventListener('mouseenter', () => {
+          row.style.background = 'rgba(139, 211, 221, 0.1)';
+        });
+        row.addEventListener('mouseleave', () => {
+          row.style.background = '';
+        });
 
-          const uploaded = file.uploaded
-            ? new Date(file.uploaded).toLocaleString()
-            : '-';
+        const uploaded = file.uploaded
+          ? new Date(file.uploaded).toLocaleString(undefined, {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false,
+          })
+          : '-';
 
-          row.innerHTML = `
+        row.innerHTML = `
             <td class="px-5 py-4 font-medium" style="color: var(--color-headline);">${file.name || '-'}</td>
             <td class="px-5 py-4 text-xs" style="color: var(--color-paragraph); opacity: 0.7;">${file.key}</td>
             <td class="px-5 py-4 text-xs" style="color: var(--color-paragraph);">${uploaded}</td>
             <td class="px-5 py-4 text-xs" style="color: var(--color-paragraph);">${file.type || '-'}</td>
             <td class="px-5 py-4 text-xs font-semibold" style="color: var(--color-button);">${(file.size / 1024).toFixed(2)} KB</td>
             <td class="px-5 py-4 text-right">
-              ${
-                file.url
-                  ? `<button data-url="${file.url}" class="history-copy px-4 py-2 btn-secondary rounded-xl text-xs font-semibold">📋 复制</button>`
-                  : `<span class="text-xs" style="color: var(--color-paragraph); opacity: 0.5;">未配置直链</span>`
-              }
+              ${file.url
+            ? `<button data-url="${file.url}" class="history-copy px-4 py-2 btn-secondary rounded-xl text-xs font-semibold">📋 复制</button>`
+            : `<span class="text-xs" style="color: var(--color-paragraph); opacity: 0.5;">未配置直链</span>`
+          }
             </td>
           `;
 
-          row.querySelectorAll('.history-copy').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-              await navigator.clipboard.writeText(btn.dataset.url);
-              showToast('✅ 直链已复制');
-            });
+        row.querySelectorAll('.history-copy').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(btn.dataset.url);
+            showToast('✅ 直链已复制');
           });
-
-          dom.historyTable.appendChild(row);
         });
-      }
 
-      function renderBreadcrumb() {
-        const segments = state.currentPath ? state.currentPath.split('/').filter(Boolean) : [];
-        const parts = ['<span class="cursor-pointer hover:opacity-70 transition-opacity font-semibold" data-prefix="" style="color: var(--color-button);">🏠 根目录</span>'];
-        let prefix = '';
-        segments.forEach((segment) => {
-          prefix += `${segment}/`;
-          parts.push(`<span style="color: var(--color-paragraph); opacity: 0.5;"> / </span>`);
-          parts.push(
-            `<span class="cursor-pointer hover:opacity-70 transition-opacity font-semibold" data-prefix="${prefix}" style="color: var(--color-button);">${segment}</span>`,
-          );
-        });
-        dom.breadcrumb.innerHTML = parts.join(' ');
-        dom.breadcrumb.querySelectorAll('[data-prefix]').forEach((el) => {
-          el.addEventListener('click', () => loadFiles(el.dataset.prefix));
-        });
-      }
+        dom.historyTable.appendChild(row);
+      });
+    }
 
-      function renderFolders() {
-        dom.foldersContainer.innerHTML = '';
-        state.folders.forEach((folder) => {
-          const name = folder.split('/').filter(Boolean).pop();
-          const card = document.createElement('button');
-          card.className = 'file-card text-left p-5 rounded-2xl transition flex flex-col gap-3 cursor-pointer';
-          card.innerHTML = `
+    function renderBreadcrumb() {
+      const segments = state.currentPath ? state.currentPath.split('/').filter(Boolean) : [];
+      const parts = ['<span class="cursor-pointer hover:opacity-70 transition-opacity font-semibold" data-prefix="" style="color: var(--color-button);">🏠 根目录</span>'];
+      let prefix = '';
+      segments.forEach((segment) => {
+        prefix += `${segment}/`;
+        parts.push(`<span style="color: var(--color-paragraph); opacity: 0.5;"> / </span>`);
+        parts.push(
+          `<span class="cursor-pointer hover:opacity-70 transition-opacity font-semibold" data-prefix="${prefix}" style="color: var(--color-button);">${segment}</span>`,
+        );
+      });
+      dom.breadcrumb.innerHTML = parts.join(' ');
+      dom.breadcrumb.querySelectorAll('[data-prefix]').forEach((el) => {
+        el.addEventListener('click', () => loadFiles(el.dataset.prefix));
+      });
+    }
+
+    function renderFolders() {
+      dom.foldersContainer.innerHTML = '';
+      state.folders.forEach((folder) => {
+        const name = folder.split('/').filter(Boolean).pop();
+        const card = document.createElement('div');
+        card.className = 'file-card p-5 rounded-2xl transition flex flex-col gap-3 cursor-pointer relative';
+        card.style.textAlign = 'left';
+
+        const checkboxId = `folder-${btoa(folder).replace(/[^a-z0-9]/gi, '')}`;
+
+        card.innerHTML = `
+            <div class="absolute top-3 left-3 z-10">
+              <input id="${checkboxId}" type="checkbox" class="folder-checkbox w-4 h-4 rounded cursor-pointer"
+                style="accent-color: var(--color-button);"
+                data-folder="${folder}" />
+            </div>
             <div class="text-4xl mb-1">📁</div>
             <span class="text-sm font-bold truncate" style="color: var(--color-headline);">${name}</span>
             <span class="text-xs truncate" style="color: var(--color-paragraph); opacity: 0.7;">${folder}</span>
           `;
-          card.addEventListener('click', () => loadFiles(folder));
-          dom.foldersContainer.appendChild(card);
+
+        // 点击复选框时阻止冒泡，避免触发文件夹导航
+        const checkbox = card.querySelector('.folder-checkbox');
+        checkbox.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (e.target.checked) {
+            state.selectedFolders.add(folder);
+          } else {
+            state.selectedFolders.delete(folder);
+          }
+          updateFilesMeta();
         });
-      }
 
-      function renderFiles() {
-        const search = dom.searchInput.value.trim().toLowerCase();
-        state.filteredFiles = state.files.filter((file) =>
-          !search || file.name.toLowerCase().includes(search) || file.key.toLowerCase().includes(search),
-        );
+        // 点击卡片其他区域进入文件夹（复选框区域除外）
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.folder-checkbox')) return;
+          loadFiles(folder);
+        });
 
-        dom.filesContainer.innerHTML = '';
-        state.filteredFiles.forEach((file) => {
-          const card = document.createElement('div');
-          card.className = 'relative file-card rounded-2xl overflow-hidden';
+        dom.foldersContainer.appendChild(card);
+      });
+    }
 
-          const checkboxId = `select-${btoa(file.key).replace(/[^a-z0-9]/gi, '')}`;
-          card.innerHTML = `
+    function renderFiles() {
+      const search = dom.searchInput.value.trim().toLowerCase();
+      state.filteredFiles = state.files.filter((file) =>
+        !search || file.name.toLowerCase().includes(search) || file.key.toLowerCase().includes(search),
+      );
+
+      applyGridColumns(state.columnsPerRow);
+      dom.filesContainer.innerHTML = '';
+      state.filteredFiles.forEach((file) => {
+        const card = document.createElement('div');
+        card.className = 'relative file-card rounded-2xl overflow-hidden';
+
+        const checkboxId = `select-${btoa(file.key).replace(/[^a-z0-9]/gi, '')}`;
+        card.innerHTML = `
             <div class="absolute top-4 left-4 z-10">
               <input id="${checkboxId}" type="checkbox" class="file-checkbox w-5 h-5 rounded cursor-pointer" style="accent-color: var(--color-button);" />
             </div>
-            <div class="file-thumbnail h-64 flex items-center justify-center overflow-hidden">
-              ${file.url ? `<img src="${file.url}" alt="${file.name}" class="w-full h-full object-cover" />` : `<div class="text-2xl" style="color: var(--color-paragraph); opacity: 0.3;">🖼️</div>`}
+            <div class="file-thumbnail">
+              ${file.url ? `<img src="${file.url}" alt="${file.name}" />` : `<div class="text-2xl" style="color: var(--color-paragraph); opacity: 0.3;">🖼️</div>`}
             </div>
             <div class="p-5 space-y-3">
               <div class="text-base font-bold truncate" style="color: var(--color-headline);">${file.name}</div>
               <div class="text-xs space-y-1.5" style="color: var(--color-paragraph); opacity: 0.7;">
                 <p class="truncate">📂 ${file.key}</p>
                 <p>💾 ${(file.size / 1024).toFixed(2)} KB · ${file.type || 'unknown'}</p>
-                <p>⏰ ${file.uploaded || '-'}</p>
+                <p>⏰ ${file.uploaded ? new Date(file.uploaded).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
               </div>
               <div class="flex gap-2 pt-2">
                 ${file.url ? `<button data-url="${file.url}" class="copy-link flex-1 px-4 py-2.5 btn-secondary rounded-xl text-xs font-semibold">📋 复制</button>` : ''}
@@ -952,180 +1171,251 @@
             </div>
           `;
 
-          const checkbox = card.querySelector('.file-checkbox');
-          checkbox.addEventListener('change', (event) => {
-            if (event.target.checked) {
-              state.selected.add(file.key);
-            } else {
-              state.selected.delete(file.key);
-            }
-            updateFilesMeta();
-          });
-
-          card.querySelectorAll('.copy-link').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-              await navigator.clipboard.writeText(btn.dataset.url);
-              showToast('✅ 链接已复制');
-            });
-          });
-
-          card.querySelectorAll('.delete-file').forEach((btn) => {
-            btn.addEventListener('click', () => deleteFiles([btn.dataset.key]));
-          });
-
-          dom.filesContainer.appendChild(card);
+        const checkbox = card.querySelector('.file-checkbox');
+        checkbox.addEventListener('change', (event) => {
+          if (event.target.checked) {
+            state.selected.add(file.key);
+          } else {
+            state.selected.delete(file.key);
+          }
+          updateFilesMeta();
         });
 
-        updateFilesMeta();
-      }
-
-      function updateFilesMeta() {
-        dom.filesMeta.textContent = `${state.filteredFiles.length} 个文件 · 已选 ${state.selected.size}`;
-      }
-
-      async function deleteFiles(keys) {
-        if (!keys || keys.length === 0) return;
-        if (!confirm(`确定删除 ${keys.length} 个对象？`)) return;
-        try {
-          const res = await apiFetch('/api/files', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keys }),
+        card.querySelectorAll('.copy-link').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(btn.dataset.url);
+            showToast('✅ 链接已复制');
           });
-          if (!res) return;
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.error || '删除失败');
-          }
-          showToast(`✅ 已删除 ${data.deleted || keys.length} 个文件`);
-          state.selected.clear();
-          await loadFiles(state.currentPath);
-        } catch (err) {
-          showToast(err.message);
-        }
-      }
+        });
 
-      async function createFolder() {
-        const name = prompt('文件夹名称');
-        if (!name) return;
-        const path = state.currentPath ? `${state.currentPath}${name}/` : `${name}/`;
+        card.querySelectorAll('.delete-file').forEach((btn) => {
+          btn.addEventListener('click', () => deleteFiles([btn.dataset.key]));
+        });
+
+        dom.filesContainer.appendChild(card);
+      });
+
+      updateFilesMeta();
+    }
+
+    function updateFilesMeta() {
+      const parts = [`${state.filteredFiles.length} 个文件`];
+      if (state.selected.size > 0) parts.push(`已选 ${state.selected.size} 个文件`);
+      if (state.selectedFolders.size > 0) parts.push(`已选 ${state.selectedFolders.size} 个文件夹`);
+      dom.filesMeta.textContent = parts.join(' · ');
+    }
+
+    async function deleteFiles(keys) {
+      if (!keys || keys.length === 0) return;
+      if (!confirm(`确定删除 ${keys.length} 个对象？`)) return;
+      try {
+        const res = await apiFetch('/api/files', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys }),
+        });
+        if (!res) return;
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '删除失败');
+        }
+        showToast(`✅ 已删除 ${data.deleted || keys.length} 个文件`);
+        state.selected.clear();
+        await loadFiles(state.currentPath);
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    async function createFolder() {
+      const name = prompt('文件夹名称');
+      if (!name) return;
+      const path = state.currentPath ? `${state.currentPath}${name}/` : `${name}/`;
+      try {
+        const res = await apiFetch('/api/folders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path }),
+        });
+        if (!res) return;
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || '创建失败');
+        }
+        showToast('✅ 文件夹已创建');
+        await loadFiles(state.currentPath);
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    /**
+     * 删除选中的文件夹，逐个调用后端 DELETE /api/folders 接口
+     * @param {string[]} paths - 要删除的文件夹路径数组
+     */
+    async function deleteFolders(paths) {
+      if (!paths || paths.length === 0) return;
+
+      let deletedCount = 0;
+      for (const path of paths) {
         try {
           const res = await apiFetch('/api/folders', {
-            method: 'POST',
+            method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path }),
           });
           if (!res) return;
           const data = await res.json();
           if (!res.ok) {
-            throw new Error(data.error || '创建失败');
+            showToast(data.error || `删除文件夹失败: ${path}`);
+            return;
           }
-          showToast('✅ 文件夹已创建');
-          await loadFiles(state.currentPath);
+          deletedCount += data.deleted || 0;
         } catch (err) {
           showToast(err.message);
-        }
-      }
-
-      async function deleteSelected() {
-        if (state.selected.size === 0) {
-          showToast('⚠️ 请选择要删除的文件');
           return;
         }
+      }
+
+      showToast(`✅ 已删除 ${paths.length} 个文件夹，共 ${deletedCount} 个文件`);
+    }
+
+    async function deleteSelected() {
+      const hasFiles = state.selected.size > 0;
+      const hasFolders = state.selectedFolders.size > 0;
+
+      if (!hasFiles && !hasFolders) {
+        showToast('⚠️ 请选择要删除的文件或文件夹');
+        return;
+      }
+
+      const msgParts = [];
+      if (hasFiles) msgParts.push(`${state.selected.size} 个文件`);
+      if (hasFolders) msgParts.push(`${state.selectedFolders.size} 个文件夹`);
+      if (!confirm(`确定删除 ${msgParts.join('和')}？`)) return;
+
+      if (hasFiles) {
         await deleteFiles(Array.from(state.selected));
       }
+      if (hasFolders) {
+        await deleteFolders(Array.from(state.selectedFolders));
+      }
 
-      function setupEventListeners() {
-        $('login-btn').addEventListener('click', login);
-        $('password').addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') login();
-        });
+      state.selected.clear();
+      state.selectedFolders.clear();
+    }
 
-        dom.nav.forEach((btn) => {
-          btn.addEventListener('click', () => {
-            setActiveNav(btn.dataset.section);
-            if (btn.dataset.section === 'files') {
-              loadFiles(state.currentPath);
-            }
-            if (btn.dataset.section === 'history') {
-              loadHistory();
-            }
-            if (btn.dataset.section === 'settings') {
-              loadStats();
-            }
-          });
-        });
+    function setupEventListeners() {
+      $('login-btn').addEventListener('click', login);
+      $('password').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') login();
+      });
 
-        dom.logout.addEventListener('click', () => {
-          showLogin();
-        });
-
-        // 文件选择 - 只显示预览，不立即上传
-        dom.fileInput.addEventListener('change', (event) => handleFileSelect(event.target.files));
-
-        // 拖拽上传
-        dom.dropZone.addEventListener('dragover', (event) => {
-          event.preventDefault();
-          dom.dropZone.classList.add('dropzone-active');
-        });
-        dom.dropZone.addEventListener('dragleave', () => {
-          dom.dropZone.classList.remove('dropzone-active');
-        });
-        dom.dropZone.addEventListener('drop', (event) => {
-          event.preventDefault();
-          dom.dropZone.classList.remove('dropzone-active');
-          handleFileSelect(event.dataTransfer.files);
-        });
-
-        // 粘贴上传 - 全局监听
-        document.addEventListener('paste', (event) => {
-          // 只在登录后的上传页面启用
-          if (!state.token) return;
-          if (dom.appSection.classList.contains('hidden')) return;
-          
-          // 如果焦点在输入框上，不拦截
-          const activeElement = document.activeElement;
-          if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
-            if (activeElement.type !== 'file') return;
+      dom.nav.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setActiveNav(btn.dataset.section);
+          if (btn.dataset.section === 'files') {
+            loadFiles(state.currentPath);
           }
-          
-          handlePaste(event);
+          if (btn.dataset.section === 'history') {
+            loadHistory();
+          }
+          if (btn.dataset.section === 'settings') {
+            loadStats();
+          }
         });
+      });
 
-        // 预览相关按钮
-        dom.previewClose.addEventListener('click', cancelPreview);
-        dom.previewCancel.addEventListener('click', cancelPreview);
-        dom.previewConfirm.addEventListener('click', confirmUpload);
+      dom.logout.addEventListener('click', () => {
+        showLogin();
+      });
 
-        dom.resultClose.addEventListener('click', () => dom.uploadResult.classList.add('hidden'));
+      // 文件选择 - 只显示预览，不立即上传
+      dom.fileInput.addEventListener('change', (event) => handleFileSelect(event.target.files));
 
-        document.querySelectorAll('.copy-btn').forEach((btn) => {
-          btn.addEventListener('click', async () => {
-            const input = $(btn.dataset.target);
-            await navigator.clipboard.writeText(input.value);
-            showToast('✅ 已复制到剪贴板');
-          });
-        });
+      // 拖拽上传
+      dom.dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dom.dropZone.classList.add('dropzone-active');
+      });
+      dom.dropZone.addEventListener('dragleave', () => {
+        dom.dropZone.classList.remove('dropzone-active');
+      });
+      dom.dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dom.dropZone.classList.remove('dropzone-active');
+        handleFileSelect(event.dataTransfer.files);
+      });
 
-        $('btn-create-folder').addEventListener('click', createFolder);
-        $('btn-delete-selected').addEventListener('click', deleteSelected);
-        $('btn-refresh').addEventListener('click', () => loadFiles(state.currentPath));
-        dom.searchInput.addEventListener('input', renderFiles);
-        dom.historySearch.addEventListener('input', renderHistory);
-        $('btn-history-refresh').addEventListener('click', loadHistory);
-      }
+      // 粘贴上传 - 全局监听
+      document.addEventListener('paste', (event) => {
+        // 只在登录后的上传页面启用
+        if (!state.token) return;
+        if (dom.appSection.classList.contains('hidden')) return;
 
-      async function bootstrap() {
-        initDom();
-        setupEventListeners();
-        if (state.token) {
-          showApp();
-          await Promise.all([loadFiles(), loadStats(), loadHistory()]);
+        // 如果焦点在输入框上，不拦截
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+          if (activeElement.type !== 'file') return;
         }
+
+        handlePaste(event);
+      });
+
+      // 预览相关按钮
+      dom.previewClose.addEventListener('click', cancelPreview);
+      dom.previewCancel.addEventListener('click', cancelPreview);
+      dom.previewConfirm.addEventListener('click', confirmUpload);
+
+      dom.resultClose.addEventListener('click', () => dom.uploadResult.classList.add('hidden'));
+
+      document.querySelectorAll('.copy-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const input = $(btn.dataset.target);
+          await navigator.clipboard.writeText(input.value);
+          showToast('✅ 已复制到剪贴板');
+        });
+      });
+
+      $('btn-create-folder').addEventListener('click', createFolder);
+      $('btn-delete-selected').addEventListener('click', deleteSelected);
+      $('btn-refresh').addEventListener('click', () => loadFiles(state.currentPath));
+      dom.searchInput.addEventListener('input', renderFiles);
+      dom.historySearch.addEventListener('input', renderHistory);
+      $('btn-history-refresh').addEventListener('click', loadHistory);
+
+      // ▦ 列数选择按钮 - 切换下拉菜单显示
+      dom.columnsToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = dom.columnsDropdown.classList.contains('hidden');
+        if (isHidden) {
+          renderColumnsDropdown();
+          dom.columnsDropdown.classList.remove('hidden');
+        } else {
+          dom.columnsDropdown.classList.add('hidden');
+        }
+      });
+
+      // 点击页面其他区域时关闭下拉菜单
+      document.addEventListener('click', (e) => {
+        if (!dom.columnsToggle.contains(e.target) && !dom.columnsDropdown.contains(e.target)) {
+          dom.columnsDropdown.classList.add('hidden');
+        }
+      });
+    }
+
+    async function bootstrap() {
+      initDom();
+      setupEventListeners();
+      applyGridColumns(state.columnsPerRow);
+      if (state.token) {
+        showApp();
+        await Promise.all([loadFiles(), loadStats(), loadHistory()]);
       }
+    }
 
-      bootstrap();
-    </script>
-  </body>
+    bootstrap();
+  </script>
+</body>
+
 </html>
-
