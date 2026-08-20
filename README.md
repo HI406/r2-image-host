@@ -10,16 +10,17 @@
 - 文件列表、搜索、批量删除、文件夹 CRUD
 - 控制台展示统计信息
 - 可选公共域名直链输出
-- WebP 格式转换（客户端 Canvas API，可选开启）
-- 图片尺寸显示（宽高自动读取）
-- 文件列表倒序排列（最新上传在最前）
-- 每行显示列数可选（2-6列，localStorage 持久化）
-- 全选 / 取消全选 / 反向选择
+- 🆕 WebP 格式转换（客户端 Canvas API，可选开启）
+- 🆕 图片尺寸显示（宽高自动读取）
+- 🆕 文件列表倒序排列（最新上传在最前）
+- 🆕 每行显示列数可选（2-6列，localStorage 持久化）
+- 🆕 全选 / 取消全选 / 反向选择
 
 ## 页面展示
 
 ![登录页](screenshots/login.png)
 ![上传页](screenshots/upload.png)
+![上传页1](screenshots/upload1.png)
 ![文件管理](screenshots/files.png)
 ![历史直链](screenshots/history.png)
 
