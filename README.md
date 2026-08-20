@@ -117,7 +117,7 @@ curl -X POST https://img.surl.vip/api/upload-direct \
   -F "file=@photo.jpg"
 
 # 指定路径
-curl -X POST https://img.surl.vip/api/upload-direct?path=blog/ \
+curl -X POST "https://img.surl.vip/api/upload-direct?path=blog/" \
   -u "YOUR_PASSWORD" \
   -F "file=@photo.jpg"
 
