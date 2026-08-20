@@ -113,17 +113,17 @@ cloudflare_api_token=<你的Cloudflare API Token>
 ```bash
 # 基础上传
 curl -X POST https://img.surl.vip/api/upload-direct \
-  -u "REDACTED_PASSWORD" \
+  -u "YOUR_PASSWORD" \
   -F "file=@photo.jpg"
 
 # 指定路径
 curl -X POST https://img.surl.vip/api/upload-direct?path=blog/ \
-  -u "REDACTED_PASSWORD" \
+  -u "YOUR_PASSWORD" \
   -F "file=@photo.jpg"
 
 # 启用 WebP 转换
 curl -X POST "https://img.surl.vip/api/upload-direct?webp=true" \
-  -u "YOUR" \
+  -u "YOUR_PASSWORD" \
   -F "file=@photo.png"
 ```
 
