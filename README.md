@@ -15,6 +15,7 @@
 - 🆕 文件列表倒序排列（最新上传在最前）
 - 🆕 每行显示列数可选（2-6列，localStorage 持久化）
 - 🆕 全选 / 取消全选 / 反向选择
+- 🆕 HTTP API 直传接口（Basic Auth 认证）
 
 ## 页面展示
 
@@ -90,6 +91,70 @@ cloudflare_api_token=<你的Cloudflare API Token>
 3. 将 KV ID 和 R2 桶名填入 `wrangler.toml`
 4. 配置 `.env` 文件
 5. 运行 `.\deploy.ps1`
+
+## HTTP API 直传接口
+
+### POST `/api/upload-direct`
+
+使用 HTTP Basic Auth 认证，一次上传一张图片，返回直链 URL。
+
+**认证方式：** HTTP Basic Auth，密码为 `APP_PASSWORD`
+
+**请求参数：**
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+|------|------|------|------|------|
+| `file` | form-data | File | 是 | 图片文件 |
+| `path` | form-data | string | 否 | 存储路径前缀（如 `blog/`） |
+| `webp` | query | string | 否 | 设为 `true` 开启 WebP 格式转换 |
+
+**请求示例：**
+
+```bash
+# 基础上传
+curl -X POST https://img.surl.vip/api/upload-direct \
+  -u "REDACTED_PASSWORD" \
+  -F "file=@photo.jpg"
+
+# 指定路径
+curl -X POST https://img.surl.vip/api/upload-direct?path=blog/ \
+  -u "REDACTED_PASSWORD" \
+  -F "file=@photo.jpg"
+
+# 启用 WebP 转换
+curl -X POST "https://img.surl.vip/api/upload-direct?webp=true" \
+  -u "YOUR" \
+  -F "file=@photo.png"
+```
+
+**成功响应（200）：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "url": "https://image.surl.vip/2026/08/1724123456789-photo.jpg",
+    "key": "2026/08/1724123456789-photo.jpg",
+    "filename": "1724123456789-photo.jpg",
+    "size": 102400,
+    "type": "image/jpeg"
+  }
+}
+```
+
+**失败响应（4xx/5xx）：**
+
+```json
+{
+  "success": false,
+  "error": "错误信息"
+}
+```
+
+**支持的文件类型：** JPEG、PNG、GIF、WebP、SVG
+**文件大小限制：** 单文件 ≤ 50MB
+
+**注意：** `webp=true` 参数仅修改文件扩展名和 Content-Type，实际的图片格式转换需要客户端预处理。
 
 ## 安全建议
 

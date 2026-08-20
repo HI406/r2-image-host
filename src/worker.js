@@ -1,6 +1,7 @@
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import { handleAuth } from './handlers/auth.js';
 import { handleUpload } from './handlers/upload.js';
+import { handleDirectUpload } from './handlers/direct-upload.js';
 import {
   handleListFiles,
   handleDeleteFiles,
@@ -16,11 +17,12 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const AUTH_FREE_ROUTES = new Set(['POST /api/auth']);
+const AUTH_FREE_ROUTES = new Set(['POST /api/auth', 'POST /api/upload-direct']);
 
 const ROUTES = new Map([
   ['POST /api/auth', { handler: handleAuth }],
   ['POST /api/upload', { handler: handleUpload, auth: true }],
+  ['POST /api/upload-direct', { handler: handleDirectUpload }],
   ['GET /api/files', { handler: handleListFiles, auth: true }],
   ['GET /api/history', { handler: handleHistory, auth: true }],
   ['DELETE /api/files', { handler: handleDeleteFiles, auth: true }],
