@@ -502,6 +502,9 @@
                   class="flex-1 px-4 py-3 rounded-xl text-sm" />
                 <span class="badge" id="files-meta"></span>
                 <div style="position: relative;">
+                  <button id="select-toggle" title="选择"
+                    class="w-9 h-9 rounded-xl flex items-center justify-center text-sm cursor-pointer transition-all"
+                    style="background: rgba(255,255,255,0.8); border: 2px solid rgba(139,211,221,0.3); color: var(--color-paragraph);">■</button>
                   <button id="columns-toggle" title="每行显示数量"
                     class="w-9 h-9 rounded-xl flex items-center justify-center text-base cursor-pointer transition-all"
                     style="background: rgba(255,255,255,0.8); border: 2px solid rgba(139,211,221,0.3); color: var(--color-paragraph);">
@@ -628,7 +631,7 @@
 
   <script>
     /** 每行显示数量的可选值 */
-    const COLUMNS_OPTIONS = [2, 3, 4, 5, 6, 8, 10];
+    const COLUMNS_OPTIONS = [2, 3, 4, 5, 6, 8];
 
     const state = {
       token: localStorage.getItem('token') || null,
@@ -691,6 +694,7 @@
       dom.statsRecent = $('stats-recent');
       dom.columnsToggle = $('columns-toggle');
       dom.columnsDropdown = $('columns-dropdown');
+      dom.selectToggle = $('select-toggle');
       dom.switchButton = $('webp-switch');
     }
 
@@ -983,6 +987,23 @@
           formData.append('path', state.currentPath);
         }
 
+        // 如果是图片文件，提取宽高传给后端
+        if (file.type.startsWith('image/')) {
+          try {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+            });
+            formData.append('width', String(img.naturalWidth));
+            formData.append('height', String(img.naturalHeight));
+            URL.revokeObjectURL(img.src);
+          } catch (err) {
+            console.warn('Failed to read image dimensions for ' + file.name, err);
+          }
+        }
+
         try {
           dom.progressText.textContent = `上传中 ${index + 1}/${files.length}`;
           const res = await apiFetch('/api/upload', {
@@ -1266,6 +1287,7 @@
                 <p class="truncate">📂 ${file.key}</p>
                 <p>💾 ${(file.size / 1024).toFixed(2)} KB · ${file.type || 'unknown'}</p>
                 <p>⏰ ${file.uploaded ? new Date(file.uploaded).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
+                <p>📐 ${file.width}×${file.height} px</p>
               </div>
               <div class="flex gap-2 pt-2">
                 ${file.url ? `<button data-url="${file.url}" class="copy-link flex-1 px-4 py-2.5 btn-secondary rounded-xl text-xs font-semibold">📋</button>` : ''}
@@ -1306,6 +1328,28 @@
       if (state.selected.size > 0) parts.push(`已选 ${state.selected.size} 个文件`);
       if (state.selectedFolders.size > 0) parts.push(`已选 ${state.selectedFolders.size} 个文件夹`);
       dom.filesMeta.textContent = parts.join(' · ');
+      // 更新全选按钮状态
+      updateSelectToggleUI();
+    }
+
+    /**
+     * 更新全选按钮的显示状态
+     * ■ 全选（无选择） / □ 取消全选（全部选中） / ◩ 反向选择（部分选中）
+     */
+    function updateSelectToggleUI() {
+      const total = state.filteredFiles.length;
+      const selected = state.selected.size;
+      if (total === 0) {
+        dom.selectToggle.textContent = '■';
+        return;
+      }
+      if (selected === 0) {
+        dom.selectToggle.textContent = '■';
+      } else if (selected >= total) {
+        dom.selectToggle.textContent = '□';
+      } else {
+        dom.selectToggle.textContent = '◩';
+      }
     }
 
     async function deleteFiles(keys) {
@@ -1486,6 +1530,38 @@
       dom.searchInput.addEventListener('input', renderFiles);
       dom.historySearch.addEventListener('input', renderHistory);
       $('btn-history-refresh').addEventListener('click', loadHistory);
+
+      // ■ 全选/取消全选/反向选择按钮
+      dom.selectToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const total = state.filteredFiles.length;
+        const selected = state.selected.size;
+        if (total === 0) return;
+
+        if (selected === 0) {
+          // 全选
+          state.filteredFiles.forEach((f) => state.selected.add(f.key));
+        } else if (selected >= total) {
+          // 取消全选
+          state.selected.clear();
+        } else {
+          // 反向选择
+          state.filteredFiles.forEach((f) => {
+            if (state.selected.has(f.key)) {
+              state.selected.delete(f.key);
+            } else {
+              state.selected.add(f.key);
+            }
+          });
+        }
+        updateFilesMeta();
+        renderFiles();
+        showToast(
+          selected === 0 ? '已全选 ' + total + ' 个文件'
+            : selected >= total ? '已取消全选'
+              : '已反向选择，选中 ' + state.selected.size + ' 个文件'
+        );
+      });
 
       // ▦ 列数选择按钮 - 切换下拉菜单显示
       dom.columnsToggle.addEventListener('click', (e) => {

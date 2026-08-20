@@ -20,7 +20,7 @@ export async function handleListFiles(request, env) {
 
   const { prefix, limit, cursor } = parseListParams(new URL(request.url));
 
-  const list = await env.R2_BUCKET.list({ prefix, limit, cursor, delimiter: '/' });
+  const list = await env.R2_BUCKET.list({ prefix, limit, cursor, delimiter: '/', include: ['httpMetadata', 'customMetadata'] });
 
   const files = list.objects.map((obj) => ({
     key: obj.key,
@@ -31,6 +31,8 @@ export async function handleListFiles(request, env) {
       ? `${env.R2_PUBLIC_DOMAIN.replace(/\/$/, '')}/${obj.key}`
       : null,
     type: obj.httpMetadata?.contentType || null,
+    width: obj.customMetadata?.width ? parseInt(obj.customMetadata.width, 10) || null : null,
+    height: obj.customMetadata?.height ? parseInt(obj.customMetadata.height, 10) || null : null,
   }));
 
   return success({
@@ -79,7 +81,7 @@ export async function handleHistory(request, env) {
   const collected = [];
 
   do {
-    const list = await env.R2_BUCKET.list({ prefix, cursor, limit: Math.min(1000, limit) });
+    const list = await env.R2_BUCKET.list({ prefix, cursor, limit: Math.min(1000, limit), include: ['httpMetadata'] });
     collected.push(...list.objects.map((obj) => formatHistoryObject(obj, env)));
     cursor = list.truncated ? list.cursor : null;
 
@@ -137,7 +139,7 @@ export async function handleStats(request, env) {
   const recentUploads = [];
 
   do {
-    const list = await env.R2_BUCKET.list({ cursor, limit: 1000 });
+    const list = await env.R2_BUCKET.list({ cursor, limit: 1000, include: ['httpMetadata'] });
     list.objects.forEach((obj) => {
       totalFiles += 1;
       totalSize += obj.size || 0;

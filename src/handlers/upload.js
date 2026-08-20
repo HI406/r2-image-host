@@ -39,6 +39,10 @@ export async function handleUpload(request, env) {
 
   const key = buildObjectKey({ basePath: path, originalName: file.name || 'upload' });
 
+  // 读取客户端传来的图片宽高
+  const width = form.get('width') || '';
+  const height = form.get('height') || '';
+
   const metadata = {
     httpMetadata: {
       contentType: file.type,
@@ -48,6 +52,8 @@ export async function handleUpload(request, env) {
       originalName: file.name,
       uploadTime: new Date().toISOString(),
       size: String(file.size),
+      width: String(width),
+      height: String(height),
     },
   };
 
