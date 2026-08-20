@@ -451,8 +451,8 @@
                   <button id="result-close" class="text-2xl hover:opacity-70 transition-opacity"
                     style="color: var(--color-paragraph);">×</button>
                 </div>
-                <img id="result-preview" src="" alt="预览" class="w-full max-h-80 object-cover rounded-xl"
-                  style="border: 2px solid rgba(139, 211, 221, 0.3);" />
+                <img id="result-preview" src="" alt="预览" class="max-w-full max-h-80 rounded-xl"
+                  style="border: 2px solid rgba(139, 211, 221, 0.3); object-fit: contain;" />
                 <div class="grid gap-3">
                   <div class="flex gap-2">
                     <input id="link-direct" readonly class="flex-1 px-4 py-3 rounded-xl text-sm"
@@ -863,8 +863,8 @@
         const reader = new FileReader();
         reader.onload = (e) => {
           card.innerHTML = `
-              <div class="file-thumbnail h-32 flex items-center justify-center overflow-hidden">
-                <img src="${e.target.result}" alt="${file.name}" class="w-full h-full object-cover" />
+              <div class="file-thumbnail">
+                <img src="${e.target.result}" alt="${file.name}" />
               </div>
               <div class="p-3">
                 <p class="text-xs font-semibold truncate" style="color: var(--color-headline);">${file.name}</p>
@@ -1046,6 +1046,8 @@
         dom.resultPreview.src = '';
         dom.linkDirect.value = window.location.origin + '/' + info.key;
       }
+      // 自动滚动到上传结果区域，方便用户复制链接
+      dom.uploadResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function loadFiles(prefix = '') {
@@ -1234,7 +1236,9 @@
 
       applyGridColumns(state.columnsPerRow);
       dom.filesContainer.innerHTML = '';
-      state.filteredFiles.forEach((file) => {
+      // 倒序排列，最新上传的图片排在最前
+      const sortedFiles = [...state.filteredFiles].reverse();
+      sortedFiles.forEach((file) => {
         const card = document.createElement('div');
         card.className = 'relative file-card rounded-2xl overflow-hidden';
 
