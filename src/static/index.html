@@ -501,7 +501,7 @@
                 <input id="search-input" type="search" placeholder="🔍 搜索文件名..."
                   class="flex-1 px-4 py-3 rounded-xl text-sm" />
                 <span class="badge" id="files-meta"></span>
-                <div style="position: relative;">
+                <div class="flex items-center gap-1" style="position: relative;">
                   <button id="select-toggle" title="选择"
                     class="w-9 h-9 rounded-xl flex items-center justify-center text-sm cursor-pointer transition-all"
                     style="background: rgba(255,255,255,0.8); border: 2px solid rgba(139,211,221,0.3); color: var(--color-paragraph);">■</button>
@@ -1297,6 +1297,8 @@
           `;
 
         const checkbox = card.querySelector('.file-checkbox');
+        // 同步复选框勾选状态与 state.selected
+        checkbox.checked = state.selected.has(file.key);
         checkbox.addEventListener('change', (event) => {
           if (event.target.checked) {
             state.selected.add(file.key);
