@@ -139,6 +139,21 @@
       box-shadow: 0 16px 32px rgba(0, 24, 88, 0.15);
     }
 
+    .switch-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+    }
+
+    .switch-button:hover {
+      background: rgba(139, 211, 221, 0.2);
+    }
+
     .file-thumbnail {
       background: linear-gradient(135deg, #f3d2c1 0%, #fef6e4 100%);
       aspect-ratio: 1 / 1;
@@ -388,8 +403,22 @@
                 <div class="flex items-center justify-between mb-4">
                   <h4 class="text-lg font-bold" style="color: var(--color-headline);">📋 待上传文件 (<span
                       id="preview-count">0</span>)</h4>
-                  <button id="preview-close" class="text-2xl hover:opacity-70 transition-opacity"
-                    style="color: var(--color-paragraph);">×</button>
+                  <div class="flex items-center gap-1">
+                    <div id="webp-switch" class="switch-button" title="转换为 WebP 格式">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="1.4em" height="1.4em" viewBox="0 0 24 24">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <g fill="none" stroke="#808080" stroke-linecap="round" stroke-width="1.5">
+                          <path
+                            d="M4 6V3.6a.6.6 0 0 1 .6-.6h14.8a.6.6 0 0 1 .6.6V6M4 18v2.4a.6.6 0 0 0 .6.6h14.8a.6.6 0 0 0 .6-.6V18" />
+                          <path stroke-linejoin="round" d="M13.5 15V9h2.4a.6.6 0 0 1 .6.6v.9A1.5 1.5 0 0 1 15 12v0" />
+                          <path stroke-linejoin="round"
+                            d="M13.5 15h2.4a.6.6 0 0 0 .6-.6v-.9A1.5 1.5 0 0 0 15 12v0h-1.5m6 3v-3m0 0V9h3v3zm-18-3v6L3 12l1.5 3V9m6 0h-3v6h3m-3-3h2" />
+                        </g>
+                      </svg>
+                    </div>
+                    <button id="preview-close" class="text-2xl hover:opacity-70 transition-opacity"
+                      style="color: var(--color-paragraph);">×</button>
+                  </div>
                 </div>
                 <div id="preview-list"
                   class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 max-h-96 overflow-y-auto"></div>
@@ -611,6 +640,8 @@
       pendingFiles: [],
       /** 每行显示的图片列数，从 localStorage 恢复 */
       columnsPerRow: parseInt(localStorage.getItem('columnsPerRow') || '3', 10),
+      /** 是否启用 WebP 格式转换，从 localStorage 恢复 */
+      webpEnabled: localStorage.getItem('webpEnabled') === 'true',
     };
 
     const dom = {};
@@ -656,6 +687,7 @@
       dom.statsRecent = $('stats-recent');
       dom.columnsToggle = $('columns-toggle');
       dom.columnsDropdown = $('columns-dropdown');
+      dom.switchButton = $('webp-switch');
     }
 
     function showToast(message, duration = 2200) {
@@ -866,6 +898,56 @@
       dom.fileInput.value = '';
     }
 
+    /**
+     * 将图片文件转换为 WebP 格式
+     * 使用 Canvas API 进行客户端转换，减小文件大小
+     * SVG 和 GIF 文件不转换，直接返回原文件
+     * @param {File} file - 原始图片文件
+     * @param {number} quality - WebP 质量参数 (0-1)，默认 0.8
+     * @returns {Promise<File>} 转换后的 WebP 文件（或原文件）
+     */
+    async function convertToWebP(file, quality = 0.8) {
+      const nonConvertible = ['image/svg+xml', 'image/gif', 'image/webp'];
+      if (nonConvertible.includes(file.type)) {
+        return file;
+      }
+
+      try {
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((b) => {
+            if (b) { resolve(b); } else { reject(new Error('WebP conversion failed')); }
+          }, 'image/webp', quality);
+        });
+
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+        const newName = baseName + '.webp';
+        console.log('WebP conversion: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + 'KB) -> ' + newName + ' (' + (blob.size / 1024).toFixed(1) + 'KB)');
+        return new File([blob], newName, { type: 'image/webp' });
+      } catch (err) {
+        console.warn('WebP conversion failed for ' + file.name + ', using original:', err);
+        return file;
+      }
+    }
+
+    /**
+     * 更新 WebP 开关按钮的 SVG 图标颜色
+     * 激活时显示粉红色，关闭时显示灰色
+     */
+    function updateWebpSwitchUI() {
+      const svg = dom.switchButton.querySelector('svg g');
+      if (!svg) return;
+      svg.setAttribute('stroke', state.webpEnabled ? '#f799c0' : '#808080');
+      dom.switchButton.style.color = state.webpEnabled ? 'var(--color-paragraph)' : '#808080';
+    }
+
     async function confirmUpload() {
       if (state.pendingFiles.length === 0) return;
 
@@ -877,7 +959,14 @@
       dom.progressText.textContent = '0%';
 
       for (let index = 0; index < files.length; index += 1) {
-        const file = files[index];
+        let file = files[index];
+
+        // 如果启用 WebP 转换，先将图片转换为 WebP
+        if (state.webpEnabled) {
+          dom.progressText.textContent = '转换 WebP ' + (index + 1) + '/' + files.length;
+          file = await convertToWebP(file);
+        }
+
         const formData = new FormData();
         formData.append('file', file);
         if (state.currentPath) {
@@ -1165,8 +1254,8 @@
                 <p>⏰ ${file.uploaded ? new Date(file.uploaded).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}</p>
               </div>
               <div class="flex gap-2 pt-2">
-                ${file.url ? `<button data-url="${file.url}" class="copy-link flex-1 px-4 py-2.5 btn-secondary rounded-xl text-xs font-semibold">📋 复制</button>` : ''}
-                <button data-key="${file.key}" class="delete-file px-4 py-2.5 btn-danger rounded-xl text-xs font-semibold whitespace-nowrap">🗑️ 删除</button>
+                ${file.url ? `<button data-url="${file.url}" class="copy-link flex-1 px-4 py-2.5 btn-secondary rounded-xl text-xs font-semibold">📋</button>` : ''}
+                <button data-key="${file.key}" class="delete-file px-4 py-2.5 btn-danger rounded-xl text-xs font-semibold whitespace-nowrap">🗑️</button>
               </div>
             </div>
           `;
@@ -1402,12 +1491,22 @@
           dom.columnsDropdown.classList.add('hidden');
         }
       });
+
+      // WebP 转换开关按钮 - 点击切换状态
+      dom.switchButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.webpEnabled = !state.webpEnabled;
+        localStorage.setItem('webpEnabled', String(state.webpEnabled));
+        updateWebpSwitchUI();
+        showToast(state.webpEnabled ? 'WebP 转换已开启' : 'WebP 转换已关闭');
+      });
     }
 
     async function bootstrap() {
       initDom();
       setupEventListeners();
       applyGridColumns(state.columnsPerRow);
+      updateWebpSwitchUI();
       if (state.token) {
         showApp();
         await Promise.all([loadFiles(), loadStats(), loadHistory()]);
